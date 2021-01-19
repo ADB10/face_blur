@@ -24,7 +24,6 @@ class App:
         self.vid = None
         self.photo = None
         self.next = "1"
-
         self.video_path = None
         self.folder_path = None
 
@@ -37,16 +36,6 @@ class App:
                     [sg.ProgressBar(1000, orientation='h', size=(20, 20), key='progbar')],
                     [sg.Button('Flouter la vidéo', enable_events=True, key='BLUR_VIDEO_BUTTON'), sg.Button('Flouter le dossier', enable_events=True, key='BLUR_VIDEO_FOLDER_BUTTON'), sg.Cancel()]]
 
-        ''' TODO BOUCLE POUR LA PROGRESS BAR A REVOIR
-        for i in range(1000):
-            # check to see if the cancel button was clicked and exit loop if clicked
-            event, values = window.read(timeout=0)
-            if event == 'Cancel' or event == sg.WIN_CLOSED:
-                break
-                # update bar with loop value +1 so that bar eventually reaches the maximum
-            window['progbar'].update_bar(i + 1)
-        '''
-
         videos_col = [[sg.Text(size=(15, 2), font=("Helvetica", 14), key='output')],
                     [sg.Canvas(size=(500, 500), key="canvas", background_color="black")],
                     [sg.Slider(size=(30, 20), range=(0, 100), resolution=100, key="slider", orientation="h",
@@ -54,16 +43,13 @@ class App:
                     [sg.Button('', button_color=(background,background),
                                         image_filename=image_restart, image_size=(50, 50), image_subsample=2, border_width=0, key='PLAY_BUTTON'),
                                         sg.Text(' ' * 2),
-                    sg.Button('', button_color=(background,background),
-                                        image_filename=image_pause, image_size=(50, 50), image_subsample=2, border_width=0, key='STOP_BUTTON'),
-                                        sg.Text(' ' * 2),
                     sg.Button('', button_color=(background,background), image_filename=image_next, image_size=(50, 50), image_subsample=2, border_width=0, key='Next')]]
 
         # ----- Full layout -----
         layout = [[sg.Column(left_col, element_justification='c'), sg.VSeperator(),sg.Column(videos_col, element_justification='c')]]
 
         # --------------------------------- Create Window ---------------------------------
-        self.window = sg.Window('Multiple Format Image Viewer', layout,resizable=True).Finalize()
+        self.window = sg.Window('Floutage de vidéo automatique', layout,resizable=True).Finalize()
 
         # set return_keyboard_events=True to make hotkeys for video playback
         # Get the tkinter canvas for displaying the video
@@ -95,6 +81,7 @@ class App:
                 except AttributeError:
                     print("no video selected, doing nothing")
                 if self.video_path:
+                    self.window.Element("PLAY_BUTTON").Update(button_color=(background,background), image_filename=image_pause, image_size=(50, 50), image_subsample=2)
                     print(self.video_path)
                     # Initialize video
                     self.vid = MyVideoCapture(self.video_path)
@@ -102,18 +89,15 @@ class App:
                     self.vid_width = 500
                     self.vid_height = int(self.vid_width * self.vid.height / self.vid.width)
                     self.frames = int(self.vid.frames)
-
                     # Update slider to match amount of frames
                     self.window.Element("slider").Update(range=(0, int(self.frames)), value=0)
                     # Update right side of counter
                     self.window.Element("counter").Update("0/%i" % self.frames)
                     # change canvas size approx to video size
                     self.canvas.config(width=self.vid_width, height=self.vid_height)
-
                     # Reset frame count
                     self.frame = 0
                     self.delay = 1 / self.vid.fps
-
                     # Update the video path text field
                     self.window.Element("_FILEPATH_").Update(self.video_path)
             
@@ -126,13 +110,15 @@ class App:
                 sg.popup_get_folder('Please enter a folder name', title='Floutage', default_path = self.video_path)
                 os.system("python3 deface/deface.py " + self.folder_path + "/*.mp4")
 
-            if event == "PLAY_BUTTON":
+            if event == "PLAY_BUTTON" and self.video_path:
                 if self.play:
                     self.play = False
-                    self.window.Element("PLAY_BUTTON").Update("Play")
+                    #self.window.Element("PLAY_BUTTON").Update("Play")
+                    self.window.Element("PLAY_BUTTON").Update(button_color=(background,background), image_filename=image_restart, image_size=(50, 50), image_subsample=2)
                 else:
                     self.play = True
-                    self.window.Element("PLAY_BUTTON").Update("Pause")
+                    #self.window.Element("PLAY_BUTTON").Update("Pause")
+                    self.window.Element("PLAY_BUTTON").Update(button_color=(background,background), image_filename=image_pause, image_size=(50, 50), image_subsample=2)
 
             if event == 'Next frame':
                 # Jump forward a frame TODO: let user decide how far to jump
@@ -145,6 +131,8 @@ class App:
         # --------------------------------- Close & Exit ---------------------------------
         self.window.Close()
         sys.exit()
+
+
 
     #################
     # Video methods #
