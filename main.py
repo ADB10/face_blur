@@ -1,5 +1,5 @@
 import PySimpleGUI as sg
-import os.path
+import os
 import sys
 import threading
 import time
@@ -11,9 +11,9 @@ import cv2
 class App:
     def __init__(self):
         background = '#F0F0F0'
-        image_pause = './ButtonGraphics/pause.png'
-        image_restart = './ButtonGraphics/restart.png'
-        image_next = './ButtonGraphics/next.png'
+        image_pause = './interface/ButtonGraphics/pause.png'
+        image_restart = './interface/ButtonGraphics/restart.png'
+        image_next = './interface/ButtonGraphics/next.png'
 
         # ------ App states ------ #
         self.play = True  # Is the video currently playing?
@@ -25,6 +25,8 @@ class App:
         self.photo = None
         self.next = "1"
 
+        self.video_path = None
+
         # --------------------------------- Define Layout ---------------------------------
 
         # First the window layout 2 columns
@@ -32,7 +34,7 @@ class App:
         left_col = [[sg.Text('Dossier'), sg.In(size=(25,1), enable_events=True ,key='_FILEPATH_'), sg.FolderBrowse()],
                     [sg.Listbox(values=[], enable_events=True, size=(40,20),key='-FILE LIST-')],
                     [sg.ProgressBar(1000, orientation='h', size=(20, 20), key='progbar')],
-                    [sg.Cancel()]]
+                    [sg.Button('Flouter la vidéo', enable_events=True, key='BLUR_VIDEO'), sg.Cancel()]]
 
         ''' TODO BOUCLE POUR LA PROGRESS BAR A REVOIR
         for i in range(1000):
@@ -85,15 +87,15 @@ class App:
                     os.path.join(folder, f)) and f.lower().endswith((".mov", ".mp4", ".mkv"))]
                 self.window['-FILE LIST-'].update(fnames)
             elif event == '-FILE LIST-':    # A file was chosen from the listbox
-                video_path = None
+                self.video_path = None
                 try:
-                    video_path =os.path.join(folder, values['-FILE LIST-'][0])
+                    self.video_path =os.path.join(folder, values['-FILE LIST-'][0])
                 except AttributeError:
                     print("no video selected, doing nothing")
-                if video_path:
-                    print(video_path)
+                if self.video_path:
+                    print(self.video_path)
                     # Initialize video
-                    self.vid = MyVideoCapture(video_path)
+                    self.vid = MyVideoCapture(self.video_path)
                     # Calculate new video dimensions
                     self.vid_width = 500
                     self.vid_height = int(self.vid_width * self.vid.height / self.vid.width)
@@ -111,8 +113,12 @@ class App:
                     self.delay = 1 / self.vid.fps
 
                     # Update the video path text field
-                    self.window.Element("_FILEPATH_").Update(video_path)
+                    self.window.Element("_FILEPATH_").Update(self.video_path)
             
+            if event == "BLUR_VIDEO":
+                # Il existe sans doute un facon BIEN MEILLEURE pour faire ça
+                os.system("cd deface && deface " + self.video_path)
+
             if event == "Play":
                 if self.play:
                     self.play = False
