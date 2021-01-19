@@ -117,7 +117,7 @@ class App:
             
             if event == "BLUR_VIDEO":
                 # Il existe sans doute un facon BIEN MEILLEURE pour faire ça
-                os.system("cd deface && deface " + self.video_path)
+                os.system("deface " + self.video_path)
 
             if event == "Play":
                 if self.play:
