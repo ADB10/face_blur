@@ -12,7 +12,7 @@ options = {
 setup(
     name = "Floutage vidéo",
     options = options,
-    version = "0.1",
+    version = "0.2",
     description = 'Floutage automatiques des visages sur une vidéo',
     executables = executables
 )
