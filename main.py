@@ -34,7 +34,7 @@ class App:
         left_col = [[sg.Text('Dossier'), sg.In(size=(25,1), enable_events=True ,key='_FILEPATH_'), sg.FolderBrowse()],
                     [sg.Listbox(values=[], enable_events=True, size=(40,20),key='-FILE LIST-')],
                     [sg.ProgressBar(1000, orientation='h', size=(20, 20), key='progbar')],
-                    [sg.Button('Flouter la vidéo', enable_events=True, key='BLUR_VIDEO'), sg.Cancel()]]
+                    [sg.Button('Flouter la vidéo', enable_events=True, key='BLUR_VIDEO_BUTTON'), sg.Cancel()]]
 
         ''' TODO BOUCLE POUR LA PROGRESS BAR A REVOIR
         for i in range(1000):
@@ -51,10 +51,10 @@ class App:
                     [sg.Slider(size=(30, 20), range=(0, 100), resolution=100, key="slider", orientation="h",
                                     enable_events=True), sg.T("0", key="counter", size=(10, 1))],
                     [sg.Button('', button_color=(background,background),
-                                        image_filename=image_restart, image_size=(50, 50), image_subsample=2, border_width=0, key='Play'),
+                                        image_filename=image_restart, image_size=(50, 50), image_subsample=2, border_width=0, key='PLAY_BUTTON'),
                                         sg.Text(' ' * 2),
                     sg.Button('', button_color=(background,background),
-                                        image_filename=image_pause, image_size=(50, 50), image_subsample=2, border_width=0, key='Stop'),
+                                        image_filename=image_pause, image_size=(50, 50), image_subsample=2, border_width=0, key='STOP_BUTTON'),
                                         sg.Text(' ' * 2),
                     sg.Button('', button_color=(background,background), image_filename=image_next, image_size=(50, 50), image_subsample=2, border_width=0, key='Next')]]
 
@@ -115,11 +115,11 @@ class App:
                     # Update the video path text field
                     self.window.Element("_FILEPATH_").Update(self.video_path)
             
-            if event == "BLUR_VIDEO":
+            if event == "BLUR_VIDEO_BUTTON":
                 # Il existe sans doute un facon BIEN MEILLEURE pour faire ça
-                os.system("deface " + self.video_path)
+                os.system("python3 deface/deface.py " + self.video_path)
 
-            if event == "Play":
+            if event == "PLAY_BUTTON":
                 if self.play:
                     self.play = False
                     self.window.Element("Play").Update("Play")
