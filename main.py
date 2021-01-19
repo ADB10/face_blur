@@ -34,7 +34,7 @@ class App:
         left_col = [[sg.Text('Dossier'), sg.In(size=(25,1), enable_events=True ,key='_FILEPATH_'), sg.FolderBrowse()],
                     [sg.Listbox(values=[], enable_events=True, size=(40,20),key='-FILE LIST-')],
                     [sg.ProgressBar(1000, orientation='h', size=(20, 20), key='progbar')],
-                    [sg.Button('Flouter la vidéo', enable_events=True, key='BLUR_VIDEO_BUTTON'), sg.Button('Flouter le dossier', enable_events=True, key='BLUR_VIDEO_FOLDER_BUTTON'), sg.Cancel()]]
+                    [sg.Button('Flouter la vidéo', enable_events=True, key='BLUR_VIDEO_BUTTON'), sg.Button('Flouter le dossier', enable_events=True, key='BLUR_VIDEO_FOLDER_BUTTON')]]
 
         videos_col = [[sg.Text(size=(15, 2), font=("Helvetica", 14), key='output')],
                     [sg.Canvas(size=(500, 500), key="canvas", background_color="black")],
@@ -86,7 +86,7 @@ class App:
                     # Initialize video
                     self.vid = MyVideoCapture(self.video_path)
                     # Calculate new video dimensions
-                    self.vid_width = 500
+                    self.vid_width = 960
                     self.vid_height = int(self.vid_width * self.vid.height / self.vid.width)
                     self.frames = int(self.vid.frames)
                     # Update slider to match amount of frames
@@ -103,11 +103,11 @@ class App:
             
             if event == "BLUR_VIDEO_BUTTON" and self.video_path != None:
                 # Il existe sans doute un facon BIEN MEILLEURE pour faire ça
-                sg.popup_get_folder('Please enter a folder name', title='Floutage', default_path = self.video_path)
+                sg.popup_get_folder('Dossier de destination des vidéos floutés :', title='Floutage', default_path = self.video_path)
                 os.system("python3 deface/deface.py " + self.video_path)
             
             if event == "BLUR_VIDEO_FOLDER_BUTTON":
-                sg.popup_get_folder('Please enter a folder name', title='Floutage', default_path = self.video_path)
+                sg.popup_get_folder('Dossier de destination des vidéos floutés :', title='Floutage', default_path = self.video_path)
                 os.system("python3 deface/deface.py " + self.folder_path + "/*.mp4")
 
             if event == "PLAY_BUTTON" and self.video_path:
