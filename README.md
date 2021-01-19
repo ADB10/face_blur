@@ -11,7 +11,7 @@
 - [x] deface : ajout de la possibilité de flouter (19/01)
 - [x] interface : bloc fichier [OK] (15/01)
 - [x] interface : bloc video mais manque des choses (15/01)
-- [x] builder [pas testé] (13/01)
+- [ ] builder [IMOPORTANT] (13/01)
 - [x] interface : fichier (13/01)
 
 ## notes 
