@@ -3,6 +3,7 @@
 
 ## do list
 - [ ] interface : changer la barre de scroll (changer le pas) sous la video pour afficher chaque image
+- [ ] interface : possibilite de rotate la video
 - [ ] deface : ne pas utiliser l'executable mais directement le code pour pouvoir mieux l'integrer dans l'interface
 - [ ] deface : possibilite d'annuler le flouttage
 - [ ] interface : animation quand la video charge (pour le moment l'app se bloque quand une video est en train de se faire flouter)
