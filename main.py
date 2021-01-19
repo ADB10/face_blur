@@ -26,6 +26,7 @@ class App:
         self.next = "1"
 
         self.video_path = None
+        self.folder_path = None
 
         # --------------------------------- Define Layout ---------------------------------
 
@@ -34,7 +35,7 @@ class App:
         left_col = [[sg.Text('Dossier'), sg.In(size=(25,1), enable_events=True ,key='_FILEPATH_'), sg.FolderBrowse()],
                     [sg.Listbox(values=[], enable_events=True, size=(40,20),key='-FILE LIST-')],
                     [sg.ProgressBar(1000, orientation='h', size=(20, 20), key='progbar')],
-                    [sg.Button('Flouter la vidéo', enable_events=True, key='BLUR_VIDEO_BUTTON'), sg.Cancel()]]
+                    [sg.Button('Flouter la vidéo', enable_events=True, key='BLUR_VIDEO_BUTTON'), sg.Button('Flouter le dossier', enable_events=True, key='BLUR_VIDEO_FOLDER_BUTTON'), sg.Cancel()]]
 
         ''' TODO BOUCLE POUR LA PROGRESS BAR A REVOIR
         for i in range(1000):
@@ -78,18 +79,19 @@ class App:
             if event == sg.WIN_CLOSED or event == 'Exit':
                 break
             if event == '_FILEPATH_':                         # Folder name was filled in, make a list of files in the folder
-                folder = values['_FILEPATH_']
+                self.folder_path = values['_FILEPATH_']
+                print(self.folder_path)
                 try:
-                    file_list = os.listdir(folder)         # get list of files in folder
+                    file_list = os.listdir(self.folder_path)         # get list of files in folder
                 except:
                     file_list = []
                 fnames = [f for f in file_list if os.path.isfile(
-                    os.path.join(folder, f)) and f.lower().endswith((".mov", ".mp4", ".mkv"))]
+                    os.path.join(self.folder_path, f)) and f.lower().endswith((".mov", ".mp4", ".mkv"))]
                 self.window['-FILE LIST-'].update(fnames)
             elif event == '-FILE LIST-':    # A file was chosen from the listbox
                 self.video_path = None
                 try:
-                    self.video_path =os.path.join(folder, values['-FILE LIST-'][0])
+                    self.video_path =os.path.join(self.folder_path, values['-FILE LIST-'][0])
                 except AttributeError:
                     print("no video selected, doing nothing")
                 if self.video_path:
@@ -115,17 +117,20 @@ class App:
                     # Update the video path text field
                     self.window.Element("_FILEPATH_").Update(self.video_path)
             
-            if event == "BLUR_VIDEO_BUTTON":
+            if event == "BLUR_VIDEO_BUTTON" and self.video_path != None:
                 # Il existe sans doute un facon BIEN MEILLEURE pour faire ça
                 os.system("python3 deface/deface.py " + self.video_path)
+            
+            if event == "BLUR_VIDEO_FOLDER_BUTTON":
+                os.system("python3 deface/deface.py " + self.folder_path + "/*.mp4")
 
             if event == "PLAY_BUTTON":
                 if self.play:
                     self.play = False
-                    self.window.Element("Play").Update("Play")
+                    self.window.Element("PLAY_BUTTON").Update("Play")
                 else:
                     self.play = True
-                    self.window.Element("Play").Update("Pause")
+                    self.window.Element("PLAY_BUTTON").Update("Pause")
 
             if event == 'Next frame':
                 # Jump forward a frame TODO: let user decide how far to jump

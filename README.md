@@ -6,7 +6,7 @@
 - [ ] interface : possibilite de rotate la video
 - [x] deface : ne pas utiliser l'executable mais directement le code pour pouvoir mieux l'integrer dans l'interface (19/01)
 - [ ] deface : possibilite d'annuler le flouttage
-- [ ] deface/interface : flouter un dossier
+- [x] deface/interface : flouter un dossier
 - [ ] interface : animation quand la video charge (pour le moment l'app se bloque quand une video est en train de se faire flouter)
 - [x] deface : ajout de la possibilité de flouter (19/01)
 - [x] interface : bloc fichier [OK] (15/01)
