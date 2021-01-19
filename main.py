@@ -88,7 +88,7 @@ class App:
                 fnames = [f for f in file_list if os.path.isfile(
                     os.path.join(self.folder_path, f)) and f.lower().endswith((".mov", ".mp4", ".mkv"))]
                 self.window['-FILE LIST-'].update(fnames)
-            elif event == '-FILE LIST-':    # A file was chosen from the listbox
+            elif event == '-FILE LIST-' and len(values['-FILE LIST-']) > 0:    # A file was chosen from the listbox
                 self.video_path = None
                 try:
                     self.video_path =os.path.join(self.folder_path, values['-FILE LIST-'][0])
@@ -119,9 +119,11 @@ class App:
             
             if event == "BLUR_VIDEO_BUTTON" and self.video_path != None:
                 # Il existe sans doute un facon BIEN MEILLEURE pour faire ça
+                sg.popup_get_folder('Please enter a folder name', title='Floutage', default_path = self.video_path)
                 os.system("python3 deface/deface.py " + self.video_path)
             
             if event == "BLUR_VIDEO_FOLDER_BUTTON":
+                sg.popup_get_folder('Please enter a folder name', title='Floutage', default_path = self.video_path)
                 os.system("python3 deface/deface.py " + self.folder_path + "/*.mp4")
 
             if event == "PLAY_BUTTON":
