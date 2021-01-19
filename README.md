@@ -1,7 +1,7 @@
 # face_blur
 
 
-do list
+## do list
 - [ ] interface : changer la barre de scroll (changer le pas) sous la video pour afficher chaque image
 - [ ] deface : ne pas utiliser l'executable mais directement le code pour pouvoir mieux l'integrer dans l'interface
 - [ ] deface : possibilite d'annuler le flouttage
@@ -12,9 +12,9 @@ do list
 - [x] builder [pas testé] (13/01)
 - [x] interface : fichier (13/01)
 
-
+## notes 
 19/01/21
-    modif emplacement main (dans le root) pour simplifier les chemins d'acces
-    ajout boutton flouter (fonctionne)
-    transforme video_path en attribut de classe (plus simple pour l'utiliser partout, il faut penser a mettre None quand pas de video select)
+- modif emplacement main (dans le root) pour simplifier les chemins d'acces
+- ajout boutton flouter (fonctionne)
+- transforme video_path en attribut de classe (plus simple pour l'utiliser partout, il faut penser a mettre None quand pas de video select)
 
