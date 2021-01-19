@@ -11,8 +11,12 @@
 - [x] deface : ajout de la possibilité de flouter (19/01)
 - [x] interface : bloc fichier [OK] (15/01)
 - [x] interface : bloc video mais manque des choses (15/01)
-- [ ] builder [IMOPORTANT] (13/01)
+- [ ] builder [IMPORTANT] (13/01)
 - [x] interface : fichier (13/01)
+- [x] choix dossier destination floutage (19/01)
+- [x] bouton play/pause fonctionnel (19/01)
+- [ ] TODO barre de chargement pour floutage dans l'interface
+- [ ] TODO barre de lecture vidéo plus facile d'utilisation et plus lisible
 
 ## notes 
 19/01/21
