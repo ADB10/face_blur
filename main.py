@@ -8,12 +8,23 @@ import PIL
 from PIL import Image, ImageTk
 import cv2
 
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
 class App:
     def __init__(self):
         background = '#F0F0F0'
-        image_pause = './interface/ButtonGraphics/pause.png'
-        image_restart = './interface/ButtonGraphics/restart.png'
-        image_next = './interface/ButtonGraphics/next.png'
+        image_pause = resource_path('./interface/ButtonGraphics/pause.png')
+        image_restart = resource_path('./interface/ButtonGraphics/restart.png')
+        image_next = resource_path('./interface/ButtonGraphics/next.png')
+        deface_path = resource_path('./deface/deface.py')
 
         # ------ App states ------ #
         self.play = True  # Is the video currently playing?
@@ -104,11 +115,11 @@ class App:
             if event == "BLUR_VIDEO_BUTTON" and self.video_path != None:
                 # Il existe sans doute un facon BIEN MEILLEURE pour faire ça
                 sg.popup_get_folder('Dossier de destination des vidéos floutés :', title='Floutage', default_path = self.video_path)
-                os.system("python3 deface/deface.py " + self.video_path)
+                os.system("python3 " + deface_path + " " + self.video_path)
             
-            if event == "BLUR_VIDEO_FOLDER_BUTTON":
+            if event == "BLUR_VIDEO_FOLDER_BUTTON" and self.folder_path != None:
                 sg.popup_get_folder('Dossier de destination des vidéos floutés :', title='Floutage', default_path = self.video_path)
-                os.system("python3 deface/deface.py " + self.folder_path + "/*.mp4")
+                os.system("python3 " + deface_path + " " + self.folder_path + "/*.mp4")
 
             if event == "PLAY_BUTTON" and self.video_path:
                 if self.play:
