@@ -19,10 +19,10 @@
 - [ ] TODO barre de lecture vidéo plus facile d'utilisation et plus lisible
 
 ## notes 
-####20/01/21
+#### 20/01/21
 - ajout d'un premier builder qui fait marcher l'interface avec les images cependant deface ne fonctionne pas (j'ai utilisé le pip auto-py-to-exe pour le builder)
 
-####19/01/21
+#### 19/01/21
 - utiliser FULL CAPS comprenhsible pour les keys de l'interface (ex: PLay -> PLAY_BUTTON)
 - modif emplacement main (dans le root) pour simplifier les chemins d'acces
 - ajout boutton flouter (fonctionne)
