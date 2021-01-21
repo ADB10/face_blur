@@ -115,11 +115,11 @@ class App:
             if event == "BLUR_VIDEO_BUTTON" and self.video_path != None:
                 # Il existe sans doute un facon BIEN MEILLEURE pour faire ça
                 sg.popup_get_folder('Dossier de destination des vidéos floutés :', title='Floutage', default_path = self.video_path)
-                os.system("python3 " + deface_path + " " + self.video_path)
+                os.system("python " + deface_path + " " + self.video_path)
             
             if event == "BLUR_VIDEO_FOLDER_BUTTON" and self.folder_path != None:
                 sg.popup_get_folder('Dossier de destination des vidéos floutés :', title='Floutage', default_path = self.video_path)
-                os.system("python3 " + deface_path + " " + self.folder_path + "/*.mp4")
+                os.system("python " + deface_path + " " + self.folder_path + "/*.mp4")
 
             if event == "PLAY_BUTTON" and self.video_path:
                 if self.play:
