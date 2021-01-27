@@ -3,6 +3,7 @@
 
 ## do list
 - [ ] TODO barre de chargement pour floutage dans l'interface
+- [ ] TODO choisir nom + dossier plus facilement
 - [ ] TODO barre de lecture vidéo plus facile d'utilisation et plus lisible
 - [ ] interface : changer la barre de scroll (changer le pas) sous la video pour afficher chaque image
 - [ ] interface : possibilite de rotate la video
