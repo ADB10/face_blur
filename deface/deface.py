@@ -16,7 +16,7 @@ import imageio.plugins.ffmpeg
 import cv2
 
 # from deface import __version__
-from centerface import CenterFace
+from deface.centerface import CenterFace
 
 
 # TODO: Optionally preserve audio track?
@@ -185,6 +185,7 @@ def image_detect(
 
 
 def get_file_type(path):
+    return 'video' # only video for the moment
     if path.startswith('<video'):
         return 'cam'
     if not os.path.isfile(path):
@@ -254,20 +255,20 @@ def parse_cli_args():
     return args
 
 
-def main():
-    args = parse_cli_args()
-    ipaths = args.input
+def main_deface(input_files):
+    
+    ipaths = input_files
+    base_opath = None # a changer pour folder output
+    replacewith = 'blur'
+    enable_preview = False
+    draw_scores = False
+    threshold = 0.2
+    ellipse = True
+    mask_scale = 1.3
+    ffmpeg_config = {'codec': 'libx264'}
+    backend = 'auto'
+    in_shape = None
 
-    base_opath = args.output
-    replacewith = args.replacewith
-    enable_preview = args.preview
-    draw_scores = args.draw_scores
-    threshold = args.thresh
-    ellipse = not args.boxes
-    mask_scale = args.mask_scale
-    ffmpeg_config = args.ffmpeg_config
-    backend = args.backend
-    in_shape = args.scale
     if in_shape is not None:
         w, h = in_shape.split('x')
         in_shape = int(w), int(h)
@@ -329,4 +330,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main_deface()

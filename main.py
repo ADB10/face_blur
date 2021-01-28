@@ -8,6 +8,9 @@ import PIL
 from PIL import Image, ImageTk
 import cv2
 
+from deface.centerface import CenterFace
+from deface.deface import *
+
 class App:
     def __init__(self):
         background = '#F0F0F0'
@@ -27,6 +30,7 @@ class App:
 
         self.video_path = None
         self.folder_path = None
+        self.files_path = None # tous les path des videos du fichier
 
         # --------------------------------- Define Layout ---------------------------------
 
@@ -85,9 +89,9 @@ class App:
                     file_list = os.listdir(self.folder_path)         # get list of files in folder
                 except:
                     file_list = []
-                fnames = [f for f in file_list if os.path.isfile(
+                self.files_path = [f for f in file_list if os.path.isfile(
                     os.path.join(self.folder_path, f)) and f.lower().endswith((".mov", ".mp4", ".mkv"))]
-                self.window['-FILE LIST-'].update(fnames)
+                self.window['-FILE LIST-'].update(self.files_path)
             elif event == '-FILE LIST-':    # A file was chosen from the listbox
                 self.video_path = None
                 try:
@@ -119,10 +123,13 @@ class App:
             
             if event == "BLUR_VIDEO_BUTTON" and self.video_path != None:
                 # Il existe sans doute un facon BIEN MEILLEURE pour faire ça
-                os.system("python3 deface/deface.py " + self.video_path)
+                main_deface([self.video_path])
             
-            if event == "BLUR_VIDEO_FOLDER_BUTTON":
-                os.system("python3 deface/deface.py " + self.folder_path + "/*.mp4")
+            if event == "BLUR_VIDEO_FOLDER_BUTTON" and self.files_path != None:
+                for i in range(len(self.files_path)): # add prefix
+                    self.files_path[i] = self.folder_path + '/' + self.files_path[i]
+                print(self.files_path)
+                main_deface(self.files_path)
 
             if event == "PLAY_BUTTON":
                 if self.play:
