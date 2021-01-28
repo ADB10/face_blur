@@ -4,4 +4,3 @@ numpy
 tqdm
 scikit-image
 opencv-python
-deface
