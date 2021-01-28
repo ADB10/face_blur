@@ -1,2 +1,3 @@
-./video/*
-./output/*
+video/*
+output/*
+build/*
