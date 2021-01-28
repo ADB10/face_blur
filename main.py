@@ -8,15 +8,27 @@ import PIL
 from PIL import Image, ImageTk
 import cv2
 
+
 from deface.centerface import CenterFace
 from deface.deface import *
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 class App:
     def __init__(self):
         background = '#F0F0F0'
-        image_pause = './interface/ButtonGraphics/pause.png'
-        image_restart = './interface/ButtonGraphics/restart.png'
-        image_next = './interface/ButtonGraphics/next.png'
+        image_pause = resource_path('./interface/ButtonGraphics/pause.png')
+        image_restart = resource_path('./interface/ButtonGraphics/restart.png')
+        image_next = resource_path('./interface/ButtonGraphics/next.png')
+        deface_path = resource_path('./deface/deface.py')
 
         # ------ App states ------ #
         self.play = True  # Is the video currently playing?
@@ -27,7 +39,6 @@ class App:
         self.vid = None
         self.photo = None
         self.next = "1"
-
         self.video_path = None
         self.folder_path = None
         self.files_path = None # tous les path des videos du fichier
@@ -39,17 +50,7 @@ class App:
         left_col = [[sg.Text('Dossier'), sg.In(size=(25,1), enable_events=True ,key='_FILEPATH_'), sg.FolderBrowse()],
                     [sg.Listbox(values=[], enable_events=True, size=(40,20),key='-FILE LIST-')],
                     [sg.ProgressBar(1000, orientation='h', size=(20, 20), key='progbar')],
-                    [sg.Button('Flouter la vidéo', enable_events=True, key='BLUR_VIDEO_BUTTON'), sg.Button('Flouter le dossier', enable_events=True, key='BLUR_VIDEO_FOLDER_BUTTON'), sg.Cancel()]]
-
-        ''' TODO BOUCLE POUR LA PROGRESS BAR A REVOIR
-        for i in range(1000):
-            # check to see if the cancel button was clicked and exit loop if clicked
-            event, values = window.read(timeout=0)
-            if event == 'Cancel' or event == sg.WIN_CLOSED:
-                break
-                # update bar with loop value +1 so that bar eventually reaches the maximum
-            window['progbar'].update_bar(i + 1)
-        '''
+                    [sg.Button('Flouter la vidéo', enable_events=True, key='BLUR_VIDEO_BUTTON'), sg.Button('Flouter le dossier', enable_events=True, key='BLUR_VIDEO_FOLDER_BUTTON')]]
 
         videos_col = [[sg.Text(size=(15, 2), font=("Helvetica", 14), key='output')],
                     [sg.Canvas(size=(500, 500), key="canvas", background_color="black")],
@@ -58,16 +59,13 @@ class App:
                     [sg.Button('', button_color=(background,background),
                                         image_filename=image_restart, image_size=(50, 50), image_subsample=2, border_width=0, key='PLAY_BUTTON'),
                                         sg.Text(' ' * 2),
-                    sg.Button('', button_color=(background,background),
-                                        image_filename=image_pause, image_size=(50, 50), image_subsample=2, border_width=0, key='STOP_BUTTON'),
-                                        sg.Text(' ' * 2),
                     sg.Button('', button_color=(background,background), image_filename=image_next, image_size=(50, 50), image_subsample=2, border_width=0, key='Next')]]
 
         # ----- Full layout -----
         layout = [[sg.Column(left_col, element_justification='c'), sg.VSeperator(),sg.Column(videos_col, element_justification='c')]]
 
         # --------------------------------- Create Window ---------------------------------
-        self.window = sg.Window('Multiple Format Image Viewer', layout,resizable=True).Finalize()
+        self.window = sg.Window('Floutage de vidéo automatique', layout,resizable=True).Finalize()
 
         # set return_keyboard_events=True to make hotkeys for video playback
         # Get the tkinter canvas for displaying the video
@@ -91,6 +89,7 @@ class App:
                     file_list = []
                 self.files_path = [f for f in file_list if os.path.isfile(
                     os.path.join(self.folder_path, f)) and f.lower().endswith((".mov", ".mp4", ".mkv"))]
+                
                 self.window['-FILE LIST-'].update(self.files_path)
             elif event == '-FILE LIST-':    # A file was chosen from the listbox
                 self.video_path = None
@@ -99,25 +98,23 @@ class App:
                 except AttributeError:
                     print("no video selected, doing nothing")
                 if self.video_path:
+                    self.window.Element("PLAY_BUTTON").Update(button_color=(background,background), image_filename=image_pause, image_size=(50, 50), image_subsample=2)
                     print(self.video_path)
                     # Initialize video
                     self.vid = MyVideoCapture(self.video_path)
                     # Calculate new video dimensions
-                    self.vid_width = 500
+                    self.vid_width = 960
                     self.vid_height = int(self.vid_width * self.vid.height / self.vid.width)
                     self.frames = int(self.vid.frames)
-
                     # Update slider to match amount of frames
                     self.window.Element("slider").Update(range=(0, int(self.frames)), value=0)
                     # Update right side of counter
                     self.window.Element("counter").Update("0/%i" % self.frames)
                     # change canvas size approx to video size
                     self.canvas.config(width=self.vid_width, height=self.vid_height)
-
                     # Reset frame count
                     self.frame = 0
                     self.delay = 1 / self.vid.fps
-
                     # Update the video path text field
                     self.window.Element("_FILEPATH_").Update(self.video_path)
             
@@ -131,13 +128,15 @@ class App:
                 print(self.files_path)
                 main_deface(self.files_path)
 
-            if event == "PLAY_BUTTON":
+            if event == "PLAY_BUTTON" and self.video_path:
                 if self.play:
                     self.play = False
-                    self.window.Element("PLAY_BUTTON").Update("Play")
+                    #self.window.Element("PLAY_BUTTON").Update("Play")
+                    self.window.Element("PLAY_BUTTON").Update(button_color=(background,background), image_filename=image_restart, image_size=(50, 50), image_subsample=2)
                 else:
                     self.play = True
-                    self.window.Element("PLAY_BUTTON").Update("Pause")
+                    #self.window.Element("PLAY_BUTTON").Update("Pause")
+                    self.window.Element("PLAY_BUTTON").Update(button_color=(background,background), image_filename=image_pause, image_size=(50, 50), image_subsample=2)
 
             if event == 'Next frame':
                 # Jump forward a frame TODO: let user decide how far to jump
@@ -150,6 +149,8 @@ class App:
         # --------------------------------- Close & Exit ---------------------------------
         self.window.Close()
         sys.exit()
+
+
 
     #################
     # Video methods #
