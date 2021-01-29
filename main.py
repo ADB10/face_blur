@@ -23,15 +23,20 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 class App:
+
+    def deface_file(self,video_path,output_folder,name):
+        main_deface([video_path],output_folder,name)
+
     def __init__(self):
         background = '#F0F0F0'
         image_pause = resource_path('./interface/ButtonGraphics/pause.png')
         image_restart = resource_path('./interface/ButtonGraphics/restart.png')
         image_next = resource_path('./interface/ButtonGraphics/next.png')
+        image_previous = resource_path('./interface/ButtonGraphics/previous.png')
         deface_path = resource_path('./deface/deface.py')
 
         # ------ App states ------ #
-        self.play = True  # Is the video currently playing?
+        self.play = False  # Is the video currently playing?
         self.delay = 0.023  # Delay between frames - not sure what it should be, not accurate playback
         self.frame = 1  # Current frame
         self.frames = None  # Number of frames
@@ -41,6 +46,8 @@ class App:
         self.next = "1"
         self.video_path = None
         self.folder_path = None
+        self.folder_path_destination = None
+        self.name_blur = None
         self.files_path = None # tous les path des videos du fichier
 
         # --------------------------------- Define Layout ---------------------------------
@@ -49,23 +56,24 @@ class App:
 
         left_col = [[sg.Text('Dossier'), sg.In(size=(25,1), enable_events=True ,key='_FILEPATH_'), sg.FolderBrowse()],
                     [sg.Listbox(values=[], enable_events=True, size=(40,20),key='-FILE LIST-')],
+                    [sg.Text('Dossier de destination'), sg.In(size=(25,1), enable_events=True ,key='_FILEPATHBLUR_'), sg.FolderBrowse()],
+                    [sg.Text('Name', size=(20, 1)), sg.InputText()],
                     [sg.ProgressBar(1000, orientation='h', size=(20, 20), key='progbar')],
                     [sg.Button('Flouter la vidéo', enable_events=True, key='BLUR_VIDEO_BUTTON'), sg.Button('Flouter le dossier', enable_events=True, key='BLUR_VIDEO_FOLDER_BUTTON')]]
 
         videos_col = [[sg.Text(size=(15, 2), font=("Helvetica", 14), key='output')],
                     [sg.Canvas(size=(500, 500), key="canvas", background_color="black")],
-                    [sg.Slider(size=(30, 20), range=(0, 100), resolution=100, key="slider", orientation="h",
+                    [sg.Slider(size=(40, 20), range=(0, 100), resolution=1, key="slider", orientation="h",
                                     enable_events=True), sg.T("0", key="counter", size=(10, 1))],
-                    [sg.Button('', button_color=(background,background),
-                                        image_filename=image_restart, image_size=(50, 50), image_subsample=2, border_width=0, key='PLAY_BUTTON'),
-                                        sg.Text(' ' * 2),
-                    sg.Button('', button_color=(background,background), image_filename=image_next, image_size=(50, 50), image_subsample=2, border_width=0, key='Next')]]
+                    [sg.Button('', button_color=(background,background), image_filename=image_previous, image_size=(50, 50), image_subsample=2, border_width=0, key='PREVIOUS_FRAME'),
+                    sg.Button('', button_color=(background,background), image_filename=image_restart, image_size=(50, 50), image_subsample=2, border_width=0, key='PLAY_BUTTON'),
+                    sg.Button('', button_color=(background,background), image_filename=image_next, image_size=(50, 50), image_subsample=2, border_width=0, key='NEXT_FRAME')]]
 
         # ----- Full layout -----
         layout = [[sg.Column(left_col, element_justification='c'), sg.VSeperator(),sg.Column(videos_col, element_justification='c')]]
 
         # --------------------------------- Create Window ---------------------------------
-        self.window = sg.Window('Floutage de vidéo automatique', layout,resizable=True).Finalize()
+        self.window = sg.Window('Floutage vidéo', layout,resizable=True).Finalize()
 
         # set return_keyboard_events=True to make hotkeys for video playback
         # Get the tkinter canvas for displaying the video
@@ -78,6 +86,8 @@ class App:
         # --------------------------------- Event Loop ---------------------------------
         while True:
             event, values = self.window.Read()
+            self.name_blur = values[0]
+            print(self.name_blur)
             if event == sg.WIN_CLOSED or event == 'Exit':
                 break
             if event == '_FILEPATH_':                         # Folder name was filled in, make a list of files in the folder
@@ -91,6 +101,8 @@ class App:
                     os.path.join(self.folder_path, f)) and f.lower().endswith((".mov", ".mp4", ".mkv"))]
                 
                 self.window['-FILE LIST-'].update(self.files_path)
+            if event == '_FILEPATHBLUR_':
+                self.folder_path_destination = values['_FILEPATHBLUR_']
             elif event == '-FILE LIST-':    # A file was chosen from the listbox
                 self.video_path = None
                 try:
@@ -98,7 +110,6 @@ class App:
                 except AttributeError:
                     print("no video selected, doing nothing")
                 if self.video_path:
-                    self.window.Element("PLAY_BUTTON").Update(button_color=(background,background), image_filename=image_pause, image_size=(50, 50), image_subsample=2)
                     print(self.video_path)
                     # Initialize video
                     self.vid = MyVideoCapture(self.video_path)
@@ -118,15 +129,20 @@ class App:
                     # Update the video path text field
                     self.window.Element("_FILEPATH_").Update(self.video_path)
             
-            if event == "BLUR_VIDEO_BUTTON" and self.video_path != None:
+            if event == "BLUR_VIDEO_BUTTON" and self.video_path != None and self.folder_path_destination != None :
                 # Il existe sans doute un facon BIEN MEILLEURE pour faire ça
-                main_deface([self.video_path])
+                #main_deface([self.video_path])
+                #Lance le deface dans un thread particulier
+                thread = threading.Thread(target=self.deface_file(self.video_path,self.folder_path_destination, self.name_blur), args=())
+                thread.start()
+                thread.join()
+                print("thread deface finished...exiting")
             
-            if event == "BLUR_VIDEO_FOLDER_BUTTON" and self.files_path != None:
+            if event == "BLUR_VIDEO_FOLDER_BUTTON" and self.files_path != None and self.folder_path_destination != None:
                 for i in range(len(self.files_path)): # add prefix
                     self.files_path[i] = self.folder_path + '/' + self.files_path[i]
                 print(self.files_path)
-                main_deface(self.files_path)
+                main_deface(self.files_path,self.folder_path_destination,self.name_blur)
 
             if event == "PLAY_BUTTON" and self.video_path:
                 if self.play:
@@ -138,10 +154,17 @@ class App:
                     #self.window.Element("PLAY_BUTTON").Update("Pause")
                     self.window.Element("PLAY_BUTTON").Update(button_color=(background,background), image_filename=image_pause, image_size=(50, 50), image_subsample=2)
 
-            if event == 'Next frame':
+            if event == 'NEXT_FRAME' and self.video_path:
                 # Jump forward a frame TODO: let user decide how far to jump
-                self.set_frame(self.frame + 1)
+                if self.frame != self.frames :
+                    self.set_frame(self.frame + 1)
 
+            if event == 'PREVIOUS_FRAME' and self.video_path:
+                # Jump forward a frame TODO: let user decide how far to jump
+                if self.frame != 0 :
+                    self.set_frame(self.frame - 1)
+
+                
             if event == "slider":
                 # self.play = False
                 self.set_frame(int(values["slider"]))

@@ -255,10 +255,11 @@ def parse_cli_args():
     return args
 
 
-def main_deface(input_files):
-    
+def main_deface(input_files, output_folder, name):
+
     ipaths = input_files
-    base_opath = None # a changer pour folder output
+    base_opath = output_folder # a changer pour folder output
+    name_blur = name
     replacewith = 'blur'
     enable_preview = False
     draw_scores = False
@@ -288,9 +289,10 @@ def main_deface(input_files):
             enable_preview = True
         filetype = get_file_type(ipath)
         is_cam = filetype == 'cam'
-        if opath is None and not is_cam:
-            root, ext = os.path.splitext(ipath)
-            opath = f'{root}_anonymized{ext}'
+        root, ext = os.path.splitext(ipath)
+        opath = opath + "/" + name_blur + ext
+        #os.path.join(opath,"video_blur",ext)
+        print('  ICICI CICICIC : ====> ',opath)
         print(f'Input:  {ipath}\nOutput: {opath}')
         if opath is None and not enable_preview:
             print('No output file is specified and the preview GUI is disabled. No output will be produced.')
