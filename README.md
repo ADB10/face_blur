@@ -3,8 +3,8 @@
 
 ## do list
 - [ ] TODO barre de chargement pour floutage dans l'interface
-- [ ] TODO choisir nom + dossier plus facilement
-- [ ] TODO barre de lecture vidéo plus facile d'utilisation et plus lisible
+- [x] TODO choisir nom + dossier plus facilement
+- [x] TODO barre de lecture vidéo plus facile d'utilisation et plus lisible
 - [ ] interface : changer la barre de scroll (changer le pas) sous la video pour afficher chaque image
 - [ ] interface : possibilite de rotate la video
 - [x] deface : ne pas utiliser l'executable mais directement le code pour pouvoir mieux l'integrer dans l'interface (19/01)
