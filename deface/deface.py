@@ -14,6 +14,7 @@ import numpy as np
 import imageio
 import imageio.plugins.ffmpeg
 import cv2
+import time
 
 # from deface import __version__
 from deface.centerface import CenterFace
@@ -283,6 +284,7 @@ def main_deface(input_files, output_folder, name):
         ipaths = tqdm.tqdm(ipaths, position=0, dynamic_ncols=True, desc='Batch progress')
 
     for ipath in ipaths:
+        time.sleep(1)
         opath = base_opath
         if ipath == 'cam':
             ipath = '<video0>'
@@ -290,9 +292,10 @@ def main_deface(input_files, output_folder, name):
         filetype = get_file_type(ipath)
         is_cam = filetype == 'cam'
         root, ext = os.path.splitext(ipath)
-        opath = opath + "/" + name_blur + ext
-        #os.path.join(opath,"video_blur",ext)
-        print('  ICICI CICICIC : ====> ',opath)
+        if(len(name_blur)==0):
+            opath = root + "_anonymized" + ext
+        else:
+            opath = opath + "/" + name_blur + ext
         print(f'Input:  {ipath}\nOutput: {opath}')
         if opath is None and not enable_preview:
             print('No output file is specified and the preview GUI is disabled. No output will be produced.')

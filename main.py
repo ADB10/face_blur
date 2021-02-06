@@ -6,7 +6,7 @@ import time
 import tkinter as tk
 import PIL
 from PIL import Image, ImageTk
-import cv2
+import cv, cv2
 
 
 from deface.centerface import CenterFace
@@ -55,11 +55,16 @@ class App:
         # First the window layout 2 columns
 
         left_col = [[sg.Text('Dossier'), sg.In(size=(25,1), enable_events=True ,key='_FILEPATH_'), sg.FolderBrowse()],
-                    [sg.Listbox(values=[], enable_events=True, size=(40,20),key='-FILE LIST-')],
+                    [sg.Listbox(values=[], enable_events=True, size=(50,20),key='-FILE LIST-')],
+                    [sg.Text('', size=(15, 1))],
                     [sg.Text('Dossier de destination'), sg.In(size=(25,1), enable_events=True ,key='_FILEPATHBLUR_'), sg.FolderBrowse()],
-                    [sg.Text('Name', size=(20, 1)), sg.InputText()],
-                    [sg.ProgressBar(1000, orientation='h', size=(20, 20), key='progbar')],
-                    [sg.Button('Flouter la vidéo', enable_events=True, key='BLUR_VIDEO_BUTTON'), sg.Button('Flouter le dossier', enable_events=True, key='BLUR_VIDEO_FOLDER_BUTTON')]]
+                    [sg.Text('', size=(15, 1))],
+                    [sg.Text('Nom du fichier', size=(15, 1)), sg.InputText()],
+                    #[sg.ProgressBar(1000, orientation='h', size=(20, 20), key='progbar')],
+                    [sg.Button('Flouter la vidéo', enable_events=True, key='BLUR_VIDEO_BUTTON')],
+                    [sg.Text('', size=(15, 1))],
+                    #[sg.Text('Nom du dossier', size=(15, 1)), sg.InputText()],
+                    [sg.Button('Flouter le dossier', enable_events=True, key='BLUR_VIDEO_FOLDER_BUTTON')]]
 
         videos_col = [[sg.Text(size=(15, 2), font=("Helvetica", 14), key='output')],
                     [sg.Canvas(size=(500, 500), key="canvas", background_color="black")],
