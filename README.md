@@ -2,12 +2,15 @@
 
 
 ## do list
-- [ ] TODO barre de chargement pour floutage dans l'interface
-- [ ] faire un système de log
+- [ ] TODO récupérer données de deface pour la barre de progression dans l'interface
+- [ ] TODO faire un système de log
+- [ ] TODO interface : pop up pour plus de lisibilité ? IHM à revoir
+- [ ] TODO interface : nom pour dossier ? (anonymized pour chaque video ?)
+- [ ] TODO interface : changer la barre de scroll (changer le pas) sous la video pour afficher chaque image
+- [ ] TODO interface : possibilite de rotate la video
 - [x] interface : choisir nom + dossier plus facilement (29/01)
 - [x] interface : barre de lecture vidéo plus facile d'utilisation et plus lisible (29/01)
-- [ ] interface : changer la barre de scroll (changer le pas) sous la video pour afficher chaque image
-- [ ] interface : possibilite de rotate la video
+- [x] interface : nom pour fichier flouté OK (06/02)
 - [x] deface : ne pas utiliser l'executable mais directement le code pour pouvoir mieux l'integrer dans l'interface (19/01)
 - [ ] deface : possibilite d'annuler le flouttage
 - [x] deface/interface : flouter un dossier
