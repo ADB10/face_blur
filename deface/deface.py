@@ -284,7 +284,6 @@ def main_deface(input_files, output_folder, name):
         ipaths = tqdm.tqdm(ipaths, position=0, dynamic_ncols=True, desc='Batch progress')
 
     for ipath in ipaths:
-        time.sleep(1)
         opath = base_opath
         if ipath == 'cam':
             ipath = '<video0>'
@@ -292,11 +291,17 @@ def main_deface(input_files, output_folder, name):
         filetype = get_file_type(ipath)
         is_cam = filetype == 'cam'
         root, ext = os.path.splitext(ipath)
-        if(len(name_blur)==0):
-            opath = root + "_anonymized" + ext
+        osef, namepath = os.path.split(ipath)
+        print(namepath)
+        #namepath = namepath.split(", ")[0]
+        namepath,ext = os.path.splitext(namepath)
+        print(namepath) 
+        
+        #Cas ou un fichier
+        if(name_blur==None):
+            opath = opath + "/" + namepath + "_anonymized" + ext
         else:
             opath = opath + "/" + name_blur + ext
-        print(f'Input:  {ipath}\nOutput: {opath}')
         if opath is None and not enable_preview:
             print('No output file is specified and the preview GUI is disabled. No output will be produced.')
         if filetype == 'video' or is_cam:

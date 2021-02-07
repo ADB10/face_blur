@@ -8,7 +8,8 @@ import PIL
 from PIL import Image, ImageTk
 import cv2
 import logging
-
+from thread_video.thread_video import ThreadVideo
+from datetime import datetime
 
 from deface.centerface import CenterFace
 from deface.deface import *
@@ -25,15 +26,12 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-class App:
 
-    def deface_file(self,video_path,output_folder,name):
-        logging.info('Appelle de la fonction "deface_one_file"')
-        main_deface([video_path],output_folder,name)
-        logging.info('Fin de la fonction "deface_one_file"')
+class App:
 
     def __init__(self):
         background = '#F0F0F0'
+        background_not_usable = '#FF0000'
         image_pause = resource_path('./interface/ButtonGraphics/pause.png')
         image_restart = resource_path('./interface/ButtonGraphics/restart.png')
         image_next = resource_path('./interface/ButtonGraphics/next.png')
@@ -54,6 +52,7 @@ class App:
         self.folder_path_destination = None
         self.name_blur = None
         self.files_path = None # tous les path des videos du fichier
+        self.blur_executing = False
 
         # --------------------------------- Define Layout ---------------------------------
 
@@ -96,8 +95,8 @@ class App:
         # --------------------------------- Event Loop ---------------------------------
         while True:
             event, values = self.window.Read()
-            self.name_blur = values[0]
-            print(self.name_blur)
+            if len(values[0]) > 0:
+                self.name_blur = values[0]
             if event == sg.WIN_CLOSED or event == 'Exit':
                 break
             if event == '_FILEPATH_':                         # Folder name was filled in, make a list of files in the folder
@@ -141,18 +140,18 @@ class App:
             
             if event == "BLUR_VIDEO_BUTTON" and self.video_path != None and self.folder_path_destination != None :
                 # Il existe sans doute un facon BIEN MEILLEURE pour faire ça
-                #main_deface([self.video_path])
                 #Lance le deface dans un thread particulier
-                thread = threading.Thread(target=self.deface_file(self.video_path,self.folder_path_destination, self.name_blur), args=())
-                thread.start()
-                thread.join()
-                print("thread deface finished...exiting")
+                logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + 'Creation de l\'objet thread pour le floutage d\'une video, dans le main')
+                curr_thread = ThreadVideo(self.video_path,self.folder_path,self.folder_path_destination,self.name_blur,None) #création de l'objet
+                x = threading.Thread(target=curr_thread.run_simple, args=()) #creation du thread executant la fonction run de notre objet
+                x.start() #excution du thread
             
-            if event == "BLUR_VIDEO_FOLDER_BUTTON" and self.files_path != None and self.folder_path_destination != None:
-                for i in range(len(self.files_path)): # add prefix
-                    self.files_path[i] = self.folder_path + '/' + self.files_path[i]
-                print(self.files_path)
-                main_deface(self.files_path,self.folder_path_destination,self.name_blur)
+            if event == "BLUR_VIDEO_FOLDER_BUTTON" and self.files_path != None and self.folder_path_destination != None and not self.blur_executing:
+                logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + 'Creation de l\'objet thread pour le floutage de plusieurs video, dans le main')
+                curr_thread = ThreadVideo(self.files_path,self.folder_path,self.folder_path_destination,None,None) #création de l'objet
+                x = threading.Thread(target=curr_thread.run_multiple, args=()) #creation du thread executant la fonction run de notre objet
+                x.start() #excution du thread
+
 
             if event == "PLAY_BUTTON" and self.video_path:
                 if self.play:
