@@ -7,10 +7,13 @@ import tkinter as tk
 import PIL
 from PIL import Image, ImageTk
 import cv, cv2
+import logging
 
 
 from deface.centerface import CenterFace
 from deface.deface import *
+
+logging.basicConfig(filename='logs.log', level=logging.DEBUG) #Create our logging file
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -25,7 +28,9 @@ def resource_path(relative_path):
 class App:
 
     def deface_file(self,video_path,output_folder,name):
+        logging.info('Appelle de la fonction "deface_one_file"')
         main_deface([video_path],output_folder,name)
+        logging.info('Fin de la fonction "deface_one_file"')
 
     def __init__(self):
         background = '#F0F0F0'
