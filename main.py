@@ -6,7 +6,7 @@ import time
 import tkinter as tk
 import PIL
 from PIL import Image, ImageTk
-import cv, cv2
+import cv2
 import logging
 
 
