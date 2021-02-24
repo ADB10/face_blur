@@ -10,11 +10,14 @@ import cv2
 import logging
 from thread_video.thread_video import ThreadVideo
 from datetime import datetime
+from multiprocessing import Value
+import json
 
 from deface.centerface import CenterFace
 from deface.deface import *
 
 logging.basicConfig(filename='logs.log', level=logging.DEBUG) #Create our logging file
+v = Value('i', 0)
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -29,13 +32,20 @@ def resource_path(relative_path):
 
 class App:
 
-    def __init__(self):
+    def __init__(self, folder_path_destination = None):
+
+        DARK_BG = '#111'
+        LIGHT_DARK_BG = '#333'
+        WHITE_TEXT = '#fff'
         background = '#F0F0F0'
         background_not_usable = '#FF0000'
+
         image_pause = resource_path('./interface/ButtonGraphics/pause.png')
         image_restart = resource_path('./interface/ButtonGraphics/restart.png')
         image_next = resource_path('./interface/ButtonGraphics/next.png')
         image_previous = resource_path('./interface/ButtonGraphics/previous.png')
+        image_rotate = resource_path('./interface/ButtonGraphics/rotate.png')
+
         deface_path = resource_path('./deface/deface.py')
 
         # ------ App states ------ #
@@ -44,45 +54,58 @@ class App:
         self.frame = 1  # Current frame
         self.frames = None  # Number of frames
         # ------ Other vars ------ #
+        with open(resource_path('cache.json')) as json_file:
+            self.cache = json.load(json_file)
         self.vid = None
         self.photo = None
         self.next = "1"
         self.video_path = None
-        self.folder_path = None
-        self.folder_path_destination = None
+        self.folder_path = self.cache["current_folder"]
+        self.folder_path_destination = self.cache["destination_folder"]
         self.name_blur = None
         self.files_path = None # tous les path des videos du fichier
         self.blur_executing = False
+        self.rotate_degree = 0
 
         # --------------------------------- Define Layout ---------------------------------
 
         # First the window layout 2 columns
 
-        left_col = [[sg.Text('Dossier'), sg.In(size=(25,1), enable_events=True ,key='_FILEPATH_'), sg.FolderBrowse()],
-                    [sg.Listbox(values=[], enable_events=True, size=(50,20),key='-FILE LIST-')],
-                    [sg.Text('', size=(15, 1))],
-                    [sg.Text('Dossier de destination'), sg.In(size=(25,1), enable_events=True ,key='_FILEPATHBLUR_'), sg.FolderBrowse()],
-                    [sg.Text('', size=(15, 1))],
-                    [sg.Text('Nom du fichier', size=(15, 1)), sg.InputText()],
-                    #[sg.ProgressBar(1000, orientation='h', size=(20, 20), key='progbar')],
-                    [sg.Button('Flouter la vidéo', enable_events=True, key='BLUR_VIDEO_BUTTON')],
-                    [sg.Text('', size=(15, 1))],
-                    #[sg.Text('Nom du dossier', size=(15, 1)), sg.InputText()],
-                    [sg.Button('Flouter le dossier', enable_events=True, key='BLUR_VIDEO_FOLDER_BUTTON')]]
+        left_col = [
+            [sg.FolderBrowse(button_text="Choisir le dossier des vidéos", target='-FOLDER_PATH-', initial_folder=self.cache["current_folder"],  button_color=(WHITE_TEXT, LIGHT_DARK_BG))],
+            [sg.In(size=(60,1), default_text=self.cache["current_folder"], enable_events=True, background_color=LIGHT_DARK_BG, text_color=WHITE_TEXT, border_width=0, key='-FOLDER_PATH-')],
+            [sg.Text('', size=(15, 2), background_color=DARK_BG)],
+            [sg.Listbox(values=[], enable_events=True, size=(58,20), key='-FILE_LIST-')],
+            [sg.Text('', size=(15, 2), background_color=DARK_BG)],
+            [sg.FolderBrowse(button_text="Choisir le dossier de destination", target='-OUTPUT_FOLDER_PATH-', initial_folder=self.cache["destination_folder"], button_color=(WHITE_TEXT, LIGHT_DARK_BG))],
+            [sg.In(size=(60,1), default_text=self.cache["destination_folder"], enable_events=True, background_color=LIGHT_DARK_BG, text_color=WHITE_TEXT, border_width=0, key='-OUTPUT_FOLDER_PATH-')],
+            [sg.Text('', size=(15, 2), background_color=DARK_BG)],
+            [sg.Text('Nom du fichier', size=(15, 1), background_color=DARK_BG, text_color=WHITE_TEXT), sg.InputText(size=(43,1))],
+            #[sg.ProgressBar(1000, orientation='h', size=(20, 20), key='progbar')],
+            [sg.Text('', size=(15, 2), background_color=DARK_BG)],
+            [
+                sg.Button('Flouter la vidéo', enable_events=True, button_color=(WHITE_TEXT, LIGHT_DARK_BG), border_width=-1, key='-BLUR_VIDEO_BUTTON-'),
+                sg.Button('Flouter le dossier', enable_events=True, button_color=(WHITE_TEXT, LIGHT_DARK_BG), border_width=-1, key='-BLUR_VIDEO_FOLDER_BUTTON-')
+            ]
+        ]
 
-        videos_col = [[sg.Text(size=(15, 2), font=("Helvetica", 14), key='output')],
-                    [sg.Canvas(size=(500, 500), key="canvas", background_color="black")],
-                    [sg.Slider(size=(40, 20), range=(0, 100), resolution=1, key="slider", orientation="h",
-                                    enable_events=True), sg.T("0", key="counter", size=(10, 1))],
-                    [sg.Button('', button_color=(background,background), image_filename=image_previous, image_size=(50, 50), image_subsample=2, border_width=0, key='PREVIOUS_FRAME'),
-                    sg.Button('', button_color=(background,background), image_filename=image_restart, image_size=(50, 50), image_subsample=2, border_width=0, key='PLAY_BUTTON'),
-                    sg.Button('', button_color=(background,background), image_filename=image_next, image_size=(50, 50), image_subsample=2, border_width=0, key='NEXT_FRAME')]]
+        videos_col = [
+            [sg.Text(size=(15, 2), key='output')],
+            [sg.Canvas(size=(500, 500), key="canvas", background_color="black")],
+            [sg.Slider(size=(40, 20), range=(0, 100), resolution=1, key="slider", orientation="h", enable_events=True), sg.T("0", key="counter", size=(10, 1))],
+            [
+                sg.Button('', button_color=(background,background), image_filename=image_previous, image_size=(50, 50), image_subsample=2, border_width=0, key='PREVIOUS_FRAME'),
+                sg.Button('', button_color=(background,background), image_filename=image_restart, image_size=(50, 50), image_subsample=2, border_width=0, key='PLAY_BUTTON'),
+                sg.Button('', button_color=(background,background), image_filename=image_next, image_size=(50, 50), image_subsample=2, border_width=0, key='NEXT_FRAME'),
+                sg.Button('', button_color=(background,background), image_filename=image_rotate, image_size=(50, 50), image_subsample=2, border_width=0, key='ROTATE_VIDEO')
+            ]
+        ]
 
         # ----- Full layout -----
-        layout = [[sg.Column(left_col, element_justification='c'), sg.VSeperator(),sg.Column(videos_col, element_justification='c')]]
+        layout = [[sg.Column(left_col, background_color=DARK_BG), sg.Column(videos_col, background_color=DARK_BG)]]
 
         # --------------------------------- Create Window ---------------------------------
-        self.window = sg.Window('Floutage vidéo', layout,resizable=True).Finalize()
+        self.window = sg.Window('BlurFace - Floutage de vidéo automatique', layout, resizable=True, background_color=DARK_BG).Finalize()
 
         # set return_keyboard_events=True to make hotkeys for video playback
         # Get the tkinter canvas for displaying the video
@@ -92,34 +115,66 @@ class App:
         # Start video display thread
         self.load_video()
 
+        # affiche les files dans la listbox
+        app_starting = True
+        def define_files_list():
+            if not app_starting:
+                self.folder_path = values['-FOLDER_PATH-']
+                self.cache["current_folder"] = values['-FOLDER_PATH-']
+            try:
+                file_list = os.listdir(self.folder_path)         # get list of files in folder
+            except:
+                file_list = []
+            self.files_path = [f for f in file_list if os.path.isfile(
+                os.path.join(self.folder_path, f)) and f.lower().endswith((".mov", ".mp4", ".mkv",".avi"))]
+            self.window['-FILE_LIST-'].update(self.files_path)
+
+
         # --------------------------------- Event Loop ---------------------------------
         while True:
+
+            if bool(v.value) == False : #si un traitement n'est pas en cours
+                if app_starting and self.folder_path != None:
+                    define_files_list()
+                    app_starting = False
+                #self.window.Element("-BLUR_VIDEO_BUTTON-").Update(button_color=(background,background))
+
             event, values = self.window.Read()
+
+            if event == sg.WIN_CLOSED or event == 'Exit':
+                with open(resource_path('cache.json'), 'w') as outfile:
+                    print(self.cache["destination_folder"])
+                    json.dump(self.cache, outfile)
+                break
+
             if len(values[0]) > 0:
                 self.name_blur = values[0]
-            if event == sg.WIN_CLOSED or event == 'Exit':
-                break
-            if event == '_FILEPATH_':                         # Folder name was filled in, make a list of files in the folder
-                self.folder_path = values['_FILEPATH_']
-                print(self.folder_path)
-                try:
-                    file_list = os.listdir(self.folder_path)         # get list of files in folder
-                except:
-                    file_list = []
-                self.files_path = [f for f in file_list if os.path.isfile(
-                    os.path.join(self.folder_path, f)) and f.lower().endswith((".mov", ".mp4", ".mkv"))]
-                
-                self.window['-FILE LIST-'].update(self.files_path)
-            if event == '_FILEPATHBLUR_':
-                self.folder_path_destination = values['_FILEPATHBLUR_']
-            elif event == '-FILE LIST-':    # A file was chosen from the listbox
+
+
+            if event == '-FOLDER_PATH-':                         # Folder name was filled in, make a list of files in the folder
+                define_files_list()
+                # self.folder_path = values['-FOLDER_PATH-']
+                # self.cache["current_folder"] = values['-FOLDER_PATH-']
+                # try:
+                #     file_list = os.listdir(self.folder_path)         # get list of files in folder
+                # except:
+                #     file_list = []
+                # self.files_path = [f for f in file_list if os.path.isfile(
+                #     os.path.join(self.folder_path, f)) and f.lower().endswith((".mov", ".mp4", ".mkv",".avi"))]
+                # self.window['-FILE_LIST-'].update(self.files_path)
+
+            if event == '-OUTPUT_FOLDER_PATH-':
+                self.folder_path_destination = values['-OUTPUT_FOLDER_PATH-']
+                self.cache["destination_folder"] = self.folder_path_destination
+
+            if event == '-FILE_LIST-':    # A file was chosen from the listbox
                 self.video_path = None
                 try:
-                    self.video_path =os.path.join(self.folder_path, values['-FILE LIST-'][0])
+                    self.video_path =os.path.join(self.folder_path, values['-FILE_LIST-'][0])
                 except AttributeError:
                     print("no video selected, doing nothing")
                 if self.video_path:
-                    print(self.video_path)
+                    # print(self.video_path)
                     # Initialize video
                     self.vid = MyVideoCapture(self.video_path)
                     # Calculate new video dimensions
@@ -136,22 +191,33 @@ class App:
                     self.frame = 0
                     self.delay = 1 / self.vid.fps
                     # Update the video path text field
-                    self.window.Element("_FILEPATH_").Update(self.video_path)
+                    self.window.Element("-FOLDER_PATH-").Update(self.video_path)
             
-            if event == "BLUR_VIDEO_BUTTON" and self.video_path != None and self.folder_path_destination != None :
-                # Il existe sans doute un facon BIEN MEILLEURE pour faire ça
-                #Lance le deface dans un thread particulier
-                logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + 'Creation de l\'objet thread pour le floutage d\'une video, dans le main')
-                curr_thread = ThreadVideo(self.video_path,self.folder_path,self.folder_path_destination,self.name_blur,None) #création de l'objet
-                x = threading.Thread(target=curr_thread.run_simple, args=()) #creation du thread executant la fonction run de notre objet
-                x.start() #excution du thread
-            
-            if event == "BLUR_VIDEO_FOLDER_BUTTON" and self.files_path != None and self.folder_path_destination != None and not self.blur_executing:
-                logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + 'Creation de l\'objet thread pour le floutage de plusieurs video, dans le main')
-                curr_thread = ThreadVideo(self.files_path,self.folder_path,self.folder_path_destination,None,None) #création de l'objet
-                x = threading.Thread(target=curr_thread.run_multiple, args=()) #creation du thread executant la fonction run de notre objet
-                x.start() #excution du thread
 
+            if event == "-BLUR_VIDEO_BUTTON-" and self.video_path != None:
+                if self.folder_path_destination != None:
+                    #Lance le deface dans un thread particulier
+                    logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : Creation de l\'objet thread pour le floutage d\'une video, dans le main')
+                    curr_thread = ThreadVideo(self.video_path,self.folder_path,self.folder_path_destination,self.name_blur,v) #création de l'objet
+                    x = threading.Thread(target=curr_thread.run_simple, args=()) #creation du thread executant la fonction run de notre objet
+                    x.start() #excution du thread
+                    self.window.Element("-BLUR_VIDEO_BUTTON-").Update(button_color=(background_not_usable,background_not_usable)) #update le bouton
+                else:
+                    pass
+                    # afficher message pour remplir le dossier de dest
+            
+            if event == "-BLUR_VIDEO_FOLDER_BUTTON-" and self.files_path != None and not self.blur_executing:
+                if self.folder_path_destination != None:
+                    logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : Creation de l\'objet thread pour le floutage de plusieurs video, dans le main')
+                    curr_thread = ThreadVideo(self.files_path,self.folder_path,self.folder_path_destination,None,v) #création de l'objet
+                    x = threading.Thread(target=curr_thread.run_multiple, args=()) #creation du thread executant la fonction run de notre objet
+                    x.start() #excution du thread
+                    self.window.Element("-BLUR_VIDEO_FOLDER_BUTTON-").Update(button_color=(background_not_usable,background_not_usable)) #update le bouton
+                else:
+                    pass
+                    # afficher message pour remplir le dossier de dest
+
+            
 
             if event == "PLAY_BUTTON" and self.video_path:
                 if self.play:
@@ -173,6 +239,8 @@ class App:
                 if self.frame != 0 :
                     self.set_frame(self.frame - 1)
 
+            if event == 'ROTATE_VIDEO' and self.video_path:
+                self.rotate_degree = (self.rotate_degree + 90) % 360
                 
             if event == "slider":
                 # self.play = False
@@ -181,6 +249,8 @@ class App:
         # --------------------------------- Close & Exit ---------------------------------
         self.window.Close()
         sys.exit()
+
+
 
 
 
@@ -198,10 +268,8 @@ class App:
         start_time = time.time()
         if self.vid:
             if self.play:
-
                 # Get a frame from the video source only if the video is supposed to play
                 ret, frame = self.vid.get_frame()
-
                 if ret:
                     self.photo = PIL.ImageTk.PhotoImage(
                         image=PIL.Image.fromarray(frame).resize((self.vid_width, self.vid_height), Image.NEAREST)

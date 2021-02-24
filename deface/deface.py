@@ -292,10 +292,7 @@ def main_deface(input_files, output_folder, name):
         is_cam = filetype == 'cam'
         root, ext = os.path.splitext(ipath)
         osef, namepath = os.path.split(ipath)
-        print(namepath)
-        #namepath = namepath.split(", ")[0]
         namepath,ext = os.path.splitext(namepath)
-        print(namepath) 
         
         #Cas ou un fichier
         if(name_blur==None):
