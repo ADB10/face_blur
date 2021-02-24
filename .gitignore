@@ -1,3 +1,4 @@
 video/*
 output/*
 build/*
+cache.json
