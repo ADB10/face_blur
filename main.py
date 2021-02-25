@@ -17,7 +17,7 @@ from deface.centerface import CenterFace
 from deface.deface import *
 
 logging.basicConfig(filename='logs.log', level=logging.DEBUG) #Create our logging file
-v = Value('i', 0)
+MEM_SHARE = Value('i', 0)
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -99,10 +99,10 @@ class App:
             [sg.Canvas(size=(500, 500), key="canvas", background_color="black")],
             [sg.Slider(size=(40, 20), range=(0, 100), resolution=1, key="slider", orientation="h", enable_events=True, background_color=(LIGHT_DARK_BG), border_width=0), sg.Text("", key="counter", background_color=DARK_BG, size=(10, 1))],
             [
-                sg.Button('', button_color=(background,background), image_filename=image_previous, image_size=(50, 50), image_subsample=2, border_width=0, key='PREVIOUS_FRAME'),
-                sg.Button('', button_color=(background,background), image_filename=image_restart, image_size=(50, 50), image_subsample=2, border_width=0, key='PLAY_BUTTON'),
-                sg.Button('', button_color=(background,background), image_filename=image_next, image_size=(50, 50), image_subsample=2, border_width=0, key='NEXT_FRAME'),
-                sg.Button('', button_color=(background,background), image_filename=image_rotate, image_size=(50, 50), image_subsample=2, border_width=0, key='ROTATE_VIDEO')
+                sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_previous, image_size=(50, 50), image_subsample=2, border_width=0, key='PREVIOUS_FRAME'),
+                sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_restart, image_size=(50, 50), image_subsample=2, border_width=0, key='PLAY_BUTTON'),
+                sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_next, image_size=(50, 50), image_subsample=2, border_width=0, key='NEXT_FRAME'),
+                sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_rotate, image_size=(50, 50), image_subsample=2, border_width=0, key='ROTATE_VIDEO')
             ]
         ]
 
@@ -122,14 +122,14 @@ class App:
 
         # --------------------------------- Event Loop ---------------------------------
         while True:
-
-            if bool(v.value) == False : #si un traitement n'est pas en cours
+            if bool(MEM_SHARE.value) == False: #si un traitement n'est pas en cours
                 if self.app_starting and self.folder_path != None: # affiche directement la liste des fichiers si presente dans le cache
                     self.define_files_list(None)
                 self.app_starting = False
-                #self.window.Element("-BLUR_VIDEO_BUTTON-").Update(button_color=(background,background))
+                self.window.Element("-BLUR_VIDEO_FOLDER_BUTTON-").Update(disabled=False)
+                self.window.Element("-BLUR_VIDEO_BUTTON-").Update(disabled=False)
 
-            event, values = self.window.Read()
+            event, values = self.window.Read(100)
 
             if event == sg.WIN_CLOSED or event == 'Exit':
                 with open(resource_path('cache.json'), 'w') as outfile:
@@ -179,10 +179,10 @@ class App:
                     if self.folder_path_destination != None:
                         #Lance le deface dans un thread particulier
                         logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : Creation de l\'objet thread pour le floutage d\'une video, dans le main')
-                        curr_thread = ThreadVideo(self.video_path,self.folder_path,self.folder_path_destination,self.name_blur,v) #création de l'objet
+                        curr_thread = ThreadVideo(self.video_path,self.folder_path,self.folder_path_destination,self.name_blur,MEM_SHARE) #création de l'objet
                         x = threading.Thread(target=curr_thread.run_simple, args=()) #creation du thread executant la fonction run de notre objet
                         x.start() #excution du thread
-                        self.window.Element("-BLUR_VIDEO_BUTTON-").Update(button_color=(background_not_usable,background_not_usable)) #update le bouton
+                        self.window.Element("-BLUR_VIDEO_BUTTON-").Update(disabled=True) #update le bouton
                         self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=False)
                         self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=False)
                     else:
@@ -195,10 +195,10 @@ class App:
                 if self.files_path != None:
                     if self.folder_path_destination != None:
                         logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : Creation de l\'objet thread pour le floutage de plusieurs video, dans le main')
-                        curr_thread = ThreadVideo(self.files_path,self.folder_path,self.folder_path_destination,None,v) #création de l'objet
+                        curr_thread = ThreadVideo(self.files_path,self.folder_path,self.folder_path_destination,None,MEM_SHARE) #création de l'objet
                         x = threading.Thread(target=curr_thread.run_multiple, args=()) #creation du thread executant la fonction run de notre objet
                         x.start() #excution du thread
-                        self.window.Element("-BLUR_VIDEO_FOLDER_BUTTON-").Update(button_color=(background_not_usable,background_not_usable)) #update le bouton
+                        self.window.Element("-BLUR_VIDEO_FOLDER_BUTTON-").Update(button_color=(background_not_usable,background_not_usable), disabled=True) #update le bouton
                         self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=False)
                         self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=False)
                     else:
@@ -213,11 +213,11 @@ class App:
                 if self.play:
                     self.play = False
                     #self.window.Element("PLAY_BUTTON").Update("Play")
-                    self.window.Element("PLAY_BUTTON").Update(button_color=(background,background), image_filename=image_restart, image_size=(50, 50), image_subsample=2)
+                    self.window.Element("PLAY_BUTTON").Update(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_restart, image_size=(50, 50), image_subsample=2)
                 else:
                     self.play = True
                     #self.window.Element("PLAY_BUTTON").Update("Pause")
-                    self.window.Element("PLAY_BUTTON").Update(button_color=(background,background), image_filename=image_pause, image_size=(50, 50), image_subsample=2)
+                    self.window.Element("PLAY_BUTTON").Update(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_pause, image_size=(50, 50), image_subsample=2)
 
             if event == 'NEXT_FRAME' and self.video_path:
                 # Jump forward a frame TODO: let user decide how far to jump
