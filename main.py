@@ -66,6 +66,7 @@ class App:
         self.files_path = None # tous les path des videos du fichier
         self.blur_executing = False
         self.rotate_degree = 0
+        self.app_starting = True
 
         # --------------------------------- Define Layout ---------------------------------
 
@@ -86,6 +87,10 @@ class App:
             [
                 sg.Button('Flouter la vidéo', enable_events=True, button_color=(WHITE_TEXT, LIGHT_DARK_BG), border_width=-1, key='-BLUR_VIDEO_BUTTON-'),
                 sg.Button('Flouter le dossier', enable_events=True, button_color=(WHITE_TEXT, LIGHT_DARK_BG), border_width=-1, key='-BLUR_VIDEO_FOLDER_BUTTON-')
+            ],
+            [
+                sg.Text('Il faut choisir une vidéo à flouter.', text_color="#AA0000", background_color=DARK_BG, visible=False, key='-WARNING_VIDEO_PATH-'),
+                sg.Text('Il faut choisir un dossier de destination.', text_color="#AA0000", background_color=DARK_BG, visible=False, key='-WARNING_OUTPUT_FOLDER-')
             ]
         ]
 
@@ -115,35 +120,19 @@ class App:
         # Start video display thread
         self.load_video()
 
-        # affiche les files dans la listbox
-        app_starting = True
-        def define_files_list():
-            if not app_starting:
-                self.folder_path = values['-FOLDER_PATH-']
-                self.cache["current_folder"] = values['-FOLDER_PATH-']
-            try:
-                file_list = os.listdir(self.folder_path)         # get list of files in folder
-            except:
-                file_list = []
-            self.files_path = [f for f in file_list if os.path.isfile(
-                os.path.join(self.folder_path, f)) and f.lower().endswith((".mov", ".mp4", ".mkv",".avi"))]
-            self.window['-FILE_LIST-'].update(self.files_path)
-
-
         # --------------------------------- Event Loop ---------------------------------
         while True:
 
             if bool(v.value) == False : #si un traitement n'est pas en cours
-                if app_starting and self.folder_path != None:
-                    define_files_list()
-                    app_starting = False
+                if self.app_starting and self.folder_path != None: # affiche directement la liste des fichiers si presente dans le cache
+                    self.define_files_list(None)
+                self.app_starting = False
                 #self.window.Element("-BLUR_VIDEO_BUTTON-").Update(button_color=(background,background))
 
             event, values = self.window.Read()
 
             if event == sg.WIN_CLOSED or event == 'Exit':
                 with open(resource_path('cache.json'), 'w') as outfile:
-                    print(self.cache["destination_folder"])
                     json.dump(self.cache, outfile)
                 break
 
@@ -152,7 +141,7 @@ class App:
 
 
             if event == '-FOLDER_PATH-':                         # Folder name was filled in, make a list of files in the folder
-                define_files_list()
+                self.define_files_list(values)
                 # self.folder_path = values['-FOLDER_PATH-']
                 # self.cache["current_folder"] = values['-FOLDER_PATH-']
                 # try:
@@ -194,28 +183,38 @@ class App:
                     self.window.Element("-FOLDER_PATH-").Update(self.video_path)
             
 
-            if event == "-BLUR_VIDEO_BUTTON-" and self.video_path != None:
-                if self.folder_path_destination != None:
-                    #Lance le deface dans un thread particulier
-                    logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : Creation de l\'objet thread pour le floutage d\'une video, dans le main')
-                    curr_thread = ThreadVideo(self.video_path,self.folder_path,self.folder_path_destination,self.name_blur,v) #création de l'objet
-                    x = threading.Thread(target=curr_thread.run_simple, args=()) #creation du thread executant la fonction run de notre objet
-                    x.start() #excution du thread
-                    self.window.Element("-BLUR_VIDEO_BUTTON-").Update(button_color=(background_not_usable,background_not_usable)) #update le bouton
+            if event == "-BLUR_VIDEO_BUTTON-":
+                if self.video_path != None:
+                    if self.folder_path_destination != None:
+                        #Lance le deface dans un thread particulier
+                        logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : Creation de l\'objet thread pour le floutage d\'une video, dans le main')
+                        curr_thread = ThreadVideo(self.video_path,self.folder_path,self.folder_path_destination,self.name_blur,v) #création de l'objet
+                        x = threading.Thread(target=curr_thread.run_simple, args=()) #creation du thread executant la fonction run de notre objet
+                        x.start() #excution du thread
+                        self.window.Element("-BLUR_VIDEO_BUTTON-").Update(button_color=(background_not_usable,background_not_usable)) #update le bouton
+                        self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=False)
+                        self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=False)
+                    else:
+                        self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=True)
+                        self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=False)
                 else:
-                    pass
-                    # afficher message pour remplir le dossier de dest
+                    self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=True)
             
-            if event == "-BLUR_VIDEO_FOLDER_BUTTON-" and self.files_path != None and not self.blur_executing:
-                if self.folder_path_destination != None:
-                    logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : Creation de l\'objet thread pour le floutage de plusieurs video, dans le main')
-                    curr_thread = ThreadVideo(self.files_path,self.folder_path,self.folder_path_destination,None,v) #création de l'objet
-                    x = threading.Thread(target=curr_thread.run_multiple, args=()) #creation du thread executant la fonction run de notre objet
-                    x.start() #excution du thread
-                    self.window.Element("-BLUR_VIDEO_FOLDER_BUTTON-").Update(button_color=(background_not_usable,background_not_usable)) #update le bouton
+            if event == "-BLUR_VIDEO_FOLDER_BUTTON-" and not self.blur_executing:
+                if self.files_path != None:
+                    if self.folder_path_destination != None:
+                        logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : Creation de l\'objet thread pour le floutage de plusieurs video, dans le main')
+                        curr_thread = ThreadVideo(self.files_path,self.folder_path,self.folder_path_destination,None,v) #création de l'objet
+                        x = threading.Thread(target=curr_thread.run_multiple, args=()) #creation du thread executant la fonction run de notre objet
+                        x.start() #excution du thread
+                        self.window.Element("-BLUR_VIDEO_FOLDER_BUTTON-").Update(button_color=(background_not_usable,background_not_usable)) #update le bouton
+                        self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=False)
+                        self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=False)
+                    else:
+                        self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=True)
+                        self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=False)
                 else:
-                    pass
-                    # afficher message pour remplir le dossier de dest
+                    self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=True)
 
             
 
@@ -251,6 +250,18 @@ class App:
         sys.exit()
 
 
+    # affiche les files dans la listbox
+    def define_files_list(self, values):
+        if not self.app_starting:
+            self.folder_path = values['-FOLDER_PATH-']
+            self.cache["current_folder"] = values['-FOLDER_PATH-']
+        try:
+            file_list = os.listdir(self.folder_path)         # get list of files in folder
+        except:
+            file_list = []
+        self.files_path = [f for f in file_list if os.path.isfile(
+            os.path.join(self.folder_path, f)) and f.lower().endswith((".mov", ".mp4", ".mkv",".avi"))]
+        self.window['-FILE_LIST-'].update(self.files_path)
 
 
 
