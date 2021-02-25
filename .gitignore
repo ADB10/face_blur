@@ -2,3 +2,4 @@ video/*
 output/*
 build/*
 cache.json
+logs.log

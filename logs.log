@@ -23,3 +23,20 @@ INFO:root:Thread : 07/02/2021 18:36:11Fin d"un thread
 INFO:root:Thread : 07/02/2021 18:37:00Fin d"un thread
 INFO:root:Main : 24/02/2021 21:23:29 : Creation de l'objet thread pour le floutage d'une video, dans le main
 INFO:root:24/02/2021 21:23:29Creation d"un thread
+INFO:root:Main : 25/02/2021 09:16:40 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:25/02/2021 09:16:40Creation d"un thread
+INFO:root:Main : 25/02/2021 09:34:02 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:25/02/2021 09:34:02Creation d"un thread
+INFO:root:Thread : 25/02/2021 09:34:05Fin d"un thread
+INFO:root:Main : 25/02/2021 09:34:11 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:25/02/2021 09:34:11Creation d"un thread
+INFO:root:Thread : 25/02/2021 09:34:13Fin d"un thread
+INFO:root:Main : 25/02/2021 09:34:24 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:25/02/2021 09:34:24Creation d"un thread
+INFO:root:Main : 25/02/2021 09:34:25 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:25/02/2021 09:34:25Creation d"un thread
+INFO:root:Main : 25/02/2021 09:34:26 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:25/02/2021 09:34:26Creation d"un thread
+INFO:root:Thread : 25/02/2021 09:34:31Fin d"un thread
+INFO:root:Thread : 25/02/2021 09:34:31Fin d"un thread
+INFO:root:Thread : 25/02/2021 09:34:32Fin d"un thread

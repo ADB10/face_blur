@@ -95,9 +95,9 @@ class App:
         ]
 
         videos_col = [
-            [sg.Text(size=(15, 2), key='output')],
+            # [sg.Text(size=(15, 2), key='output')],
             [sg.Canvas(size=(500, 500), key="canvas", background_color="black")],
-            [sg.Slider(size=(40, 20), range=(0, 100), resolution=1, key="slider", orientation="h", enable_events=True), sg.T("0", key="counter", size=(10, 1))],
+            [sg.Slider(size=(40, 20), range=(0, 100), resolution=1, key="slider", orientation="h", enable_events=True, background_color=(LIGHT_DARK_BG), border_width=0), sg.Text("", key="counter", background_color=DARK_BG, size=(10, 1))],
             [
                 sg.Button('', button_color=(background,background), image_filename=image_previous, image_size=(50, 50), image_subsample=2, border_width=0, key='PREVIOUS_FRAME'),
                 sg.Button('', button_color=(background,background), image_filename=image_restart, image_size=(50, 50), image_subsample=2, border_width=0, key='PLAY_BUTTON'),
@@ -107,7 +107,7 @@ class App:
         ]
 
         # ----- Full layout -----
-        layout = [[sg.Column(left_col, background_color=DARK_BG), sg.Column(videos_col, background_color=DARK_BG)]]
+        layout = [[sg.Column(left_col, background_color=DARK_BG), sg.Column(videos_col, element_justification='c', background_color=DARK_BG)]]
 
         # --------------------------------- Create Window ---------------------------------
         self.window = sg.Window('BlurFace - Floutage de vidéo automatique', layout, resizable=True, background_color=DARK_BG).Finalize()
@@ -142,15 +142,6 @@ class App:
 
             if event == '-FOLDER_PATH-':                         # Folder name was filled in, make a list of files in the folder
                 self.define_files_list(values)
-                # self.folder_path = values['-FOLDER_PATH-']
-                # self.cache["current_folder"] = values['-FOLDER_PATH-']
-                # try:
-                #     file_list = os.listdir(self.folder_path)         # get list of files in folder
-                # except:
-                #     file_list = []
-                # self.files_path = [f for f in file_list if os.path.isfile(
-                #     os.path.join(self.folder_path, f)) and f.lower().endswith((".mov", ".mp4", ".mkv",".avi"))]
-                # self.window['-FILE_LIST-'].update(self.files_path)
 
             if event == '-OUTPUT_FOLDER_PATH-':
                 self.folder_path_destination = values['-OUTPUT_FOLDER_PATH-']
