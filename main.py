@@ -8,7 +8,7 @@ import PIL
 from PIL import Image, ImageTk
 import cv2
 import logging
-from thread_video.thread_video import ThreadVideo
+from thread_video.thread_video import ThreadVideo, SharedMemory
 from datetime import datetime
 from multiprocessing import Value
 import json
@@ -16,8 +16,9 @@ import json
 from deface.centerface import CenterFace
 from deface.deface import *
 
+
 logging.basicConfig(filename='logs.log', level=logging.DEBUG) #Create our logging file
-MEM_SHARE = Value('i', 0)
+SHARED_MEMORY = SharedMemory()
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -89,8 +90,9 @@ class App:
                 sg.Button('Flouter le dossier', enable_events=True, button_color=(WHITE_TEXT, LIGHT_DARK_BG), border_width=-1, key='-BLUR_VIDEO_FOLDER_BUTTON-')
             ],
             [
-                sg.Text('Il faut choisir une vidéo à flouter.', text_color="#AA0000", background_color=DARK_BG, visible=False, key='-WARNING_VIDEO_PATH-'),
-                sg.Text('Il faut choisir un dossier de destination.', text_color="#AA0000", background_color=DARK_BG, visible=False, key='-WARNING_OUTPUT_FOLDER-')
+                sg.Text('Il faut choisir une vidéo à flouter.', text_color="#AA0000", size=(60,1), background_color=DARK_BG, visible=False, key='-WARNING_VIDEO_PATH-'),
+                sg.Text('Il faut choisir un dossier de destination.', text_color="#AA0000", size=(60,1), background_color=DARK_BG, visible=False, key='-WARNING_OUTPUT_FOLDER-'),
+                sg.Text(text='En cours de floutage... | 0%', text_color="#AA0000", size=(60,1), background_color=DARK_BG, visible=False, key='-LOADING_BLUR_VIDEO-')
             ]
         ]
 
@@ -122,13 +124,22 @@ class App:
 
         # --------------------------------- Event Loop ---------------------------------
         while True:
-            if bool(MEM_SHARE.value) == False: #si un traitement n'est pas en cours
+
+            if SHARED_MEMORY.deface_executing:
+                text_progress = "En cours de floutage... | " + str(round(SHARED_MEMORY.progress, 2)) + "%"
+                self.window.Element("-LOADING_BLUR_VIDEO-").Update(visible=True)
+                self.window.Element("-LOADING_BLUR_VIDEO-").Update(text_progress)
+            else:
                 if self.app_starting and self.folder_path != None: # affiche directement la liste des fichiers si presente dans le cache
                     self.define_files_list(None)
+                if SHARED_MEMORY.deface_finish: # dans le cas ou une video vient de se faire flouter et quil faut actualiser le dossier courant
+                    self.define_files_list(None)
+                    SHARED_MEMORY.deface_finish = False 
                 self.app_starting = False
+                self.window.Element("-LOADING_BLUR_VIDEO-").Update(visible=False)
                 self.window.Element("-BLUR_VIDEO_FOLDER_BUTTON-").Update(disabled=False)
                 self.window.Element("-BLUR_VIDEO_BUTTON-").Update(disabled=False)
-
+            
             event, values = self.window.Read(100)
 
             if event == sg.WIN_CLOSED or event == 'Exit':
@@ -154,7 +165,6 @@ class App:
                 except AttributeError:
                     print("no video selected, doing nothing")
                 if self.video_path:
-                    # print(self.video_path)
                     # Initialize video
                     self.vid = MyVideoCapture(self.video_path)
                     # Calculate new video dimensions
@@ -179,7 +189,7 @@ class App:
                     if self.folder_path_destination != None:
                         #Lance le deface dans un thread particulier
                         logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : Creation de l\'objet thread pour le floutage d\'une video, dans le main')
-                        curr_thread = ThreadVideo(self.video_path,self.folder_path,self.folder_path_destination,self.name_blur,MEM_SHARE) #création de l'objet
+                        curr_thread = ThreadVideo(self.video_path,self.folder_path,self.folder_path_destination,self.name_blur,SHARED_MEMORY) #création de l'objet
                         x = threading.Thread(target=curr_thread.run_simple, args=()) #creation du thread executant la fonction run de notre objet
                         x.start() #excution du thread
                         self.window.Element("-BLUR_VIDEO_BUTTON-").Update(disabled=True) #update le bouton
@@ -195,7 +205,7 @@ class App:
                 if self.files_path != None:
                     if self.folder_path_destination != None:
                         logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : Creation de l\'objet thread pour le floutage de plusieurs video, dans le main')
-                        curr_thread = ThreadVideo(self.files_path,self.folder_path,self.folder_path_destination,None,MEM_SHARE) #création de l'objet
+                        curr_thread = ThreadVideo(self.files_path,self.folder_path,self.folder_path_destination,None,SHARED_MEMORY) #création de l'objet
                         x = threading.Thread(target=curr_thread.run_multiple, args=()) #creation du thread executant la fonction run de notre objet
                         x.start() #excution du thread
                         self.window.Element("-BLUR_VIDEO_FOLDER_BUTTON-").Update(button_color=(background_not_usable,background_not_usable), disabled=True) #update le bouton
@@ -243,7 +253,7 @@ class App:
 
     # affiche les files dans la listbox
     def define_files_list(self, values):
-        if not self.app_starting:
+        if not self.app_starting and not SHARED_MEMORY.deface_finish:
             self.folder_path = values['-FOLDER_PATH-']
             self.cache["current_folder"] = values['-FOLDER_PATH-']
         try:

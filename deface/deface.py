@@ -102,7 +102,8 @@ def video_detect(
         mask_scale: float,
         ellipse: bool,
         draw_scores: bool,
-        ffmpeg_config: Dict[str, str]
+        ffmpeg_config: Dict[str, str],
+        shared_mem=None
 ):
     try:
         reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath)
@@ -134,6 +135,8 @@ def video_detect(
     for frame in read_iter:
         # Perform network inference, get bb dets but discard landmark predictions
         dets, _ = centerface(frame, threshold=threshold)
+
+        shared_mem.progress += (1/nframes)*100
 
         anonymize_frame(
             dets, frame, mask_scale=mask_scale,
@@ -256,7 +259,7 @@ def parse_cli_args():
     return args
 
 
-def main_deface(input_files, output_folder, name):
+def main_deface(input_files, output_folder, name, shared_mem):
 
     ipaths = input_files
     base_opath = output_folder # a changer pour folder output
@@ -314,7 +317,8 @@ def main_deface(input_files, output_folder, name):
                 draw_scores=draw_scores,
                 enable_preview=enable_preview,
                 nested=multi_file,
-                ffmpeg_config=ffmpeg_config
+                ffmpeg_config=ffmpeg_config,
+                shared_mem=shared_mem
             )
         elif filetype == 'image':
             image_detect(
