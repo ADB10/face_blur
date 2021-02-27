@@ -17,17 +17,18 @@ class SharedMemory:
 
 logging.basicConfig(filename='logs.log', level=logging.DEBUG) #Create our logging file
 
-def deface_file(self, video_path, output_folder, name, shared_mem):
-    main_deface([video_path],output_folder,name, shared_mem)
+def deface_file(self, video_path, output_folder, name, shared_mem,extension):
+    main_deface([video_path],output_folder,name, shared_mem,extension)
 
 class ThreadVideo : 
-    def __init__(self, files_path,folder_path,folder_path_destination,name_blur,shared_mem ):
+    def __init__(self, files_path,folder_path,folder_path_destination,name_blur,shared_mem,extension):
         self.files_path = files_path
         self.shared_mem = shared_mem
         self.folder_path = folder_path
         self.folder_path_destination = folder_path_destination
         self.name_blur = name_blur
         self.shared_memory = shared_mem
+        self.extension = extension
 
     def run_multiple(self) :
         self.shared_memory.deface_executing = True 
@@ -36,7 +37,7 @@ class ThreadVideo :
         for index in range(nbthreads) :
             logging.info('Thread : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + 'Creation d"un thread')
             self.files_path[index] = self.folder_path + '/' + self.files_path[index]
-            x = threading.Thread(target=deface_file, args=(self,self.files_path[index],self.folder_path_destination, self.name_blur, self.shared_mem))
+            x = threading.Thread(target=deface_file, args=(self,self.files_path[index],self.folder_path_destination, self.name_blur, self.shared_mem, self.extension))
             threads.append(x)
             x.start()
 
@@ -48,7 +49,7 @@ class ThreadVideo :
     def run_simple(self) :
         self.shared_memory.deface_executing = True
         logging.info(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + 'Creation d"un thread')
-        x = threading.Thread(target=deface_file, args=(self,self.files_path,self.folder_path_destination, self.name_blur, self.shared_mem))
+        x = threading.Thread(target=deface_file, args=(self,self.files_path,self.folder_path_destination, self.name_blur, self.shared_mem, self.extension))
         x.start() #lancement du thread
         x.join() #attente fin du thread
         logging.info('Thread : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + 'Fin d"un thread')

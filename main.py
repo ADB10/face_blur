@@ -68,6 +68,7 @@ class App:
         self.blur_executing = False
         self.rotate_degree = 0
         self.app_starting = True
+        self.extension = None
 
         # --------------------------------- Define Layout ---------------------------------
 
@@ -83,6 +84,12 @@ class App:
             [sg.In(size=(60,1), default_text=self.cache["destination_folder"], enable_events=True, background_color=LIGHT_DARK_BG, text_color=WHITE_TEXT, border_width=0, key='-OUTPUT_FOLDER_PATH-')],
             [sg.Text('', size=(15, 2), background_color=DARK_BG)],
             [sg.Text('Nom du fichier', size=(15, 1), background_color=DARK_BG, text_color=WHITE_TEXT), sg.InputText(size=(43,1))],
+            [
+                sg.Radio('avi', "1", enable_events=True, key='-AVI-',background_color=DARK_BG), 
+                sg.Radio('mkv', "1", enable_events=True, key='-MKV-',background_color=DARK_BG),
+                sg.Radio('mov', "1", enable_events=True, key='-MOV-',background_color=DARK_BG), 
+                sg.Radio('mp4', "1", enable_events=True, key='-MP4-',background_color=DARK_BG)
+            ],
             [sg.Text('', size=(15, 2), background_color=DARK_BG)],
             [
                 sg.Button('Flouter la vidéo', enable_events=True, button_color=(WHITE_TEXT, LIGHT_DARK_BG), border_width=-1, key='-BLUR_VIDEO_BUTTON-'),
@@ -191,7 +198,7 @@ class App:
                     if self.folder_path_destination != None:
                         #Lance le deface dans un thread particulier
                         logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : Creation de l\'objet thread pour le floutage d\'une video, dans le main')
-                        curr_thread = ThreadVideo(self.video_path,self.folder_path,self.folder_path_destination,self.name_blur,SHARED_MEMORY) #création de l'objet
+                        curr_thread = ThreadVideo(self.video_path,self.folder_path,self.folder_path_destination,self.name_blur,SHARED_MEMORY, self.extension) #création de l'objet
                         x = threading.Thread(target=curr_thread.run_simple, args=()) #creation du thread executant la fonction run de notre objet
                         x.start() #excution du thread
                         self.window.Element("-BLUR_VIDEO_BUTTON-").Update(disabled=True) #update les boutons
@@ -208,7 +215,7 @@ class App:
                 if self.files_path != None:
                     if self.folder_path_destination != None:
                         logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : Creation de l\'objet thread pour le floutage de plusieurs video, dans le main')
-                        curr_thread = ThreadVideo(self.files_path,self.folder_path,self.folder_path_destination,None,SHARED_MEMORY) #création de l'objet
+                        curr_thread = ThreadVideo(self.files_path,self.folder_path,self.folder_path_destination,None,SHARED_MEMORY, self.extension) #création de l'objet
                         x = threading.Thread(target=curr_thread.run_multiple, args=()) #creation du thread executant la fonction run de notre objet
                         SHARED_MEMORY.files_to_blur = len(self.files_path)
                         x.start() #excution du thread
@@ -246,7 +253,16 @@ class App:
 
             if event == 'ROTATE_VIDEO' and self.video_path:
                 self.rotate_degree = (self.rotate_degree + 90) % 360
-                
+
+            if event =='-AVI-':
+                self.extension = ".avi"
+            if event =='-MKV-':
+                self.extension = ".mkv"
+            if event =='-MOV-':
+                self.extension = ".mov"
+            if event =='-MP4-': 
+                self.extension = ".mp4"
+
             if event == "slider":
                 # self.play = False
                 self.set_frame(int(values["slider"]))
