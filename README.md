@@ -2,19 +2,21 @@
 
 
 ## do list
-- [ ] TODO récupérer données de deface pour la barre de progression dans l'interface
-- [ ] TODO faire un système de log
-- [ ] TODO interface : pop up pour plus de lisibilité ? IHM à revoir
-- [ ] TODO interface : nom pour dossier ? (anonymized pour chaque video ?)
-- [ ] TODO interface : changer la barre de scroll (changer le pas) sous la video pour afficher chaque image
-- [ ] TODO interface : possibilite de rotate la video
+- [ ] TODO Faire la rotation
+- [ ] TODO Choisir le nombre de fps
+- [ ] TODO changer la barre de scroll (changer le pas) sous la video pour afficher chaque image
+- [ ] TODO  possibilite de rotate la video
+- [ ] TODO deface : possibilite d'annuler le flouttage
+- [x] Choisir format (27/02)
+- [x] récupérer données de deface pour la barre de progression dans l'interface
+- [x] faire un système de log
+- [x] nom pour dossier et fichiers
 - [x] interface : choisir nom + dossier plus facilement (29/01)
 - [x] interface : barre de lecture vidéo plus facile d'utilisation et plus lisible (29/01)
 - [x] interface : nom pour fichier flouté OK (06/02)
 - [x] deface : ne pas utiliser l'executable mais directement le code pour pouvoir mieux l'integrer dans l'interface (19/01)
-- [ ] deface : possibilite d'annuler le flouttage
 - [x] deface/interface : flouter un dossier
-- [ ] interface : animation quand la video charge (pour le moment l'app se bloque quand une video est en train de se faire flouter)
+- [x] interface : animation quand la video charge (pour le moment l'app se bloque quand une video est en train de se faire flouter)
 - [x] builder [WORK] (21/01)
 - [x] deface : ajout de la possibilité de flouter (19/01)
 - [x] interface : bloc fichier [OK] (15/01)
