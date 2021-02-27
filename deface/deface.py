@@ -137,6 +137,9 @@ def video_detect(
         dets, _ = centerface(frame, threshold=threshold)
 
         shared_mem.progress += (1/nframes)*100
+        if(shared_mem.progress>100):
+            shared_mem.file_being_blur +=1
+            shared_mem.progress=0
 
         anonymize_frame(
             dets, frame, mask_scale=mask_scale,

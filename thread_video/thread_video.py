@@ -12,6 +12,8 @@ class SharedMemory:
         self.deface_executing = False # floutage en cours ?
         self.deface_finish = False # le floutage vient de se terminer ?
         self.progress = 0.0 # progress bar en %
+        self.files_to_blur = 1 # nb de fichiers à flouter
+        self.file_being_blur = 1 # numéro du fichier en train de se faire flouter
 
 logging.basicConfig(filename='logs.log', level=logging.DEBUG) #Create our logging file
 

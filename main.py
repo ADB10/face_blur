@@ -83,7 +83,6 @@ class App:
             [sg.In(size=(60,1), default_text=self.cache["destination_folder"], enable_events=True, background_color=LIGHT_DARK_BG, text_color=WHITE_TEXT, border_width=0, key='-OUTPUT_FOLDER_PATH-')],
             [sg.Text('', size=(15, 2), background_color=DARK_BG)],
             [sg.Text('Nom du fichier', size=(15, 1), background_color=DARK_BG, text_color=WHITE_TEXT), sg.InputText(size=(43,1))],
-            #[sg.ProgressBar(1000, orientation='h', size=(20, 20), key='progbar')],
             [sg.Text('', size=(15, 2), background_color=DARK_BG)],
             [
                 sg.Button('Flouter la vidéo', enable_events=True, button_color=(WHITE_TEXT, LIGHT_DARK_BG), border_width=-1, key='-BLUR_VIDEO_BUTTON-'),
@@ -92,7 +91,8 @@ class App:
             [
                 sg.Text('Il faut choisir une vidéo à flouter.', text_color="#AA0000", size=(60,1), background_color=DARK_BG, visible=False, key='-WARNING_VIDEO_PATH-'),
                 sg.Text('Il faut choisir un dossier de destination.', text_color="#AA0000", size=(60,1), background_color=DARK_BG, visible=False, key='-WARNING_OUTPUT_FOLDER-'),
-                sg.Text(text='En cours de floutage... | 0%', text_color="#AA0000", size=(60,1), background_color=DARK_BG, visible=False, key='-LOADING_BLUR_VIDEO-')
+                sg.ProgressBar(100, orientation='h', size=(20, 20), visible=False, key='-PROGRESS_BAR-'),
+                sg.Text(text='En cours de floutage... | 0%', text_color="#AA0000", size=(60,1), background_color=DARK_BG, visible=True, key='-LOADING_BLUR_VIDEO-')
             ]
         ]
 
@@ -126,8 +126,9 @@ class App:
         while True:
 
             if SHARED_MEMORY.deface_executing:
-                text_progress = "En cours de floutage... | " + str(round(SHARED_MEMORY.progress, 2)) + "%"
+                text_progress = "En cours de floutage... " + str(SHARED_MEMORY.file_being_blur) + "/"+ str(SHARED_MEMORY.files_to_blur) + " | " + str(round(SHARED_MEMORY.progress, 2)) + "%"
                 self.window.Element("-LOADING_BLUR_VIDEO-").Update(visible=True)
+                self.window.Element("-PROGRESS_BAR-").Update(visible=True, current_count=SHARED_MEMORY.progress)
                 self.window.Element("-LOADING_BLUR_VIDEO-").Update(text_progress)
             else:
                 if self.app_starting and self.folder_path != None: # affiche directement la liste des fichiers si presente dans le cache
@@ -137,6 +138,7 @@ class App:
                     SHARED_MEMORY.deface_finish = False 
                 self.app_starting = False
                 self.window.Element("-LOADING_BLUR_VIDEO-").Update(visible=False)
+                self.window.Element("-PROGRESS_BAR-").Update(visible=False, current_count=0)
                 self.window.Element("-BLUR_VIDEO_FOLDER_BUTTON-").Update(disabled=False)
                 self.window.Element("-BLUR_VIDEO_BUTTON-").Update(disabled=False)
             
@@ -192,7 +194,8 @@ class App:
                         curr_thread = ThreadVideo(self.video_path,self.folder_path,self.folder_path_destination,self.name_blur,SHARED_MEMORY) #création de l'objet
                         x = threading.Thread(target=curr_thread.run_simple, args=()) #creation du thread executant la fonction run de notre objet
                         x.start() #excution du thread
-                        self.window.Element("-BLUR_VIDEO_BUTTON-").Update(disabled=True) #update le bouton
+                        self.window.Element("-BLUR_VIDEO_BUTTON-").Update(disabled=True) #update les boutons
+                        self.window.Element("-BLUR_VIDEO_FOLDER_BUTTON-").Update(disabled=True) 
                         self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=False)
                         self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=False)
                     else:
@@ -207,8 +210,10 @@ class App:
                         logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : Creation de l\'objet thread pour le floutage de plusieurs video, dans le main')
                         curr_thread = ThreadVideo(self.files_path,self.folder_path,self.folder_path_destination,None,SHARED_MEMORY) #création de l'objet
                         x = threading.Thread(target=curr_thread.run_multiple, args=()) #creation du thread executant la fonction run de notre objet
+                        SHARED_MEMORY.files_to_blur = len(self.files_path)
                         x.start() #excution du thread
-                        self.window.Element("-BLUR_VIDEO_FOLDER_BUTTON-").Update(button_color=(background_not_usable,background_not_usable), disabled=True) #update le bouton
+                        self.window.Element("-BLUR_VIDEO_FOLDER_BUTTON-").Update(disabled=True) #update les boutons
+                        self.window.Element("-BLUR_VIDEO_BUTTON-").Update(disabled=True)
                         self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=False)
                         self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=False)
                     else:
@@ -282,11 +287,14 @@ class App:
             if self.play:
                 # Get a frame from the video source only if the video is supposed to play
                 ret, frame = self.vid.get_frame()
+                
                 if ret:
                     self.photo = PIL.ImageTk.PhotoImage(
                         image=PIL.Image.fromarray(frame).resize((self.vid_width, self.vid_height), Image.NEAREST)
                     )
                     self.canvas.create_image(0, 0, image=self.photo, anchor=tk.NW)
+                    if(self.rotate_degree!=0):
+                        frame = cv2.rotate(frame, self.rotate_degree)
 
                     self.frame += 1
                     self.update_counter(self.frame)
@@ -341,6 +349,7 @@ class MyVideoCapture:
         """
         if self.vid.isOpened():
             ret, frame = self.vid.read()
+            
             if ret:
                 # Return a boolean success flag and the current frame converted to BGR
                 return ret, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
