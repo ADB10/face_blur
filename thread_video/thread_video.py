@@ -31,7 +31,7 @@ class ThreadVideo :
     def __init__(self, files_path,folder_path,folder_path_destination,name_blur,shared_mem,extension):
         self.files_path = files_path
         self.shared_mem = shared_mem
-        self.folder_path = folder_path
+        self.folder_path = resource_path(folder_path)
         self.folder_path_destination = folder_path_destination
         self.name_blur = name_blur
         self.shared_memory = shared_mem
