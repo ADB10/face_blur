@@ -15,7 +15,14 @@ class SharedMemory:
         self.files_to_blur = 1 # nb de fichiers à flouter
         self.file_being_blur = 1 # numéro du fichier en train de se faire flouter
 
-logging.basicConfig(filename='logs.log', level=logging.DEBUG) #Create our logging file
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
+logging.basicConfig(filename=resource_path('logs.log'), level=logging.DEBUG) #Create our logging file
 
 def deface_file(self, video_path, output_folder, name, shared_mem,extension):
     main_deface([video_path],output_folder,name, shared_mem,extension)
