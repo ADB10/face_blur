@@ -16,10 +16,6 @@ import json
 from deface.centerface import CenterFace
 from deface.deface import *
 
-
-logging.basicConfig(filename='logs.log', level=logging.DEBUG) #Create our logging file
-SHARED_MEMORY = SharedMemory()
-
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     try:
@@ -27,9 +23,10 @@ def resource_path(relative_path):
         base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.abspath(".")
-
     return os.path.join(base_path, relative_path)
 
+logging.basicConfig(filename=resource_path('logs.log'), level=logging.DEBUG) #Create our logging file
+SHARED_MEMORY = SharedMemory()
 
 class App:
 
