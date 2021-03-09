@@ -66,32 +66,46 @@ class App:
         self.rotate_degree = 0
         self.app_starting = True
         self.extension = None
+        self.param = "Video"
+        self.blur = True
 
         # --------------------------------- Define Layout ---------------------------------
 
         # First the window layout 2 columns
 
         left_col = [
-            [sg.FolderBrowse(button_text="Choisir le dossier des vidéos", target='-FOLDER_PATH-', initial_folder=self.cache["current_folder"],  button_color=(WHITE_TEXT, LIGHT_DARK_BG))],
+            [sg.FolderBrowse(button_text="Choisir le dossier des vidéos", target='-FOLDER_PATH-', initial_folder=self.cache["current_folder"], button_color=(WHITE_TEXT, LIGHT_DARK_BG))],
             [sg.In(size=(60,1), default_text=self.cache["current_folder"], enable_events=True, background_color=LIGHT_DARK_BG, text_color=WHITE_TEXT, border_width=0, key='-FOLDER_PATH-')],
-            [sg.Text('', size=(15, 2), background_color=DARK_BG)],
             [sg.Listbox(values=[], enable_events=True, size=(58,20), key='-FILE_LIST-')],
             [sg.Text('', size=(15, 2), background_color=DARK_BG)],
             [sg.FolderBrowse(button_text="Choisir le dossier de destination", target='-OUTPUT_FOLDER_PATH-', initial_folder=self.cache["destination_folder"], button_color=(WHITE_TEXT, LIGHT_DARK_BG))],
             [sg.In(size=(60,1), default_text=self.cache["destination_folder"], enable_events=True, background_color=LIGHT_DARK_BG, text_color=WHITE_TEXT, border_width=0, key='-OUTPUT_FOLDER_PATH-')],
             [sg.Text('', size=(15, 2), background_color=DARK_BG)],
-            [sg.Text('Nom du fichier', size=(15, 1), background_color=DARK_BG, text_color=WHITE_TEXT), sg.InputText(size=(43,1))],
+            [sg.Checkbox('Flouter', size=(10,1), enable_events=True, default=True, background_color=DARK_BG, text_color=WHITE_TEXT, key='-BLUR-')],
             [
+                sg.Text('Format', size=(10, 1), background_color=DARK_BG, text_color=WHITE_TEXT),
                 sg.Radio('avi', "1", enable_events=True, key='-AVI-',background_color=DARK_BG), 
                 sg.Radio('mkv', "1", enable_events=True, key='-MKV-',background_color=DARK_BG),
                 sg.Radio('mov', "1", enable_events=True, key='-MOV-',background_color=DARK_BG), 
                 sg.Radio('mp4', "1", enable_events=True, key='-MP4-',background_color=DARK_BG)
             ],
-            [sg.Text('', size=(15, 2), background_color=DARK_BG)],
             [
-                sg.Button('Flouter la vidéo', enable_events=True, button_color=(WHITE_TEXT, LIGHT_DARK_BG), border_width=-1, key='-BLUR_VIDEO_BUTTON-'),
-                sg.Button('Flouter le dossier', enable_events=True, button_color=(WHITE_TEXT, LIGHT_DARK_BG), border_width=-1, key='-BLUR_VIDEO_FOLDER_BUTTON-')
+                sg.Text('Rotation', size=(10, 1), background_color=DARK_BG, text_color=WHITE_TEXT),
+                sg.Radio('0°', "1", enable_events=True, default = True, key='-ROT0-',background_color=DARK_BG), 
+                sg.Radio('-90°', "1", enable_events=True, key='-ROT-90-',background_color=DARK_BG), 
+                sg.Radio('90°', "1", enable_events=True, key='-ROT90-',background_color=DARK_BG),
+                sg.Radio('180°', "1", enable_events=True, key='-ROT180-',background_color=DARK_BG)
             ],
+            [
+                sg.Text('Appliquer les paramètres pour :', size=(15, 2), background_color=DARK_BG),
+                sg.Radio('Vidéo', "2", default=True, enable_events=True, key='-VIDEO-',background_color=DARK_BG), 
+                sg.Radio('Dossier', "2", enable_events=True, key='-FOLDER-',background_color=DARK_BG)
+            ],
+            [
+                sg.Text('Nom du fichier', size=(15, 1), enable_events=True, background_color=DARK_BG, text_color=WHITE_TEXT,visible=True, key='-NAME_TEXT-'), 
+                sg.InputText(size=(43,1), enable_events=True, visible=True, key='-NAME_INPUT-')
+            ],
+            [ sg.Button('Appliquer', enable_events=True, button_color=(WHITE_TEXT, LIGHT_DARK_BG), border_width=-1, key='-APPLY-')],
             [
                 sg.Text('Il faut choisir une vidéo à flouter.', text_color="#AA0000", size=(60,1), background_color=DARK_BG, visible=False, key='-WARNING_VIDEO_PATH-'),
                 sg.Text('Il faut choisir un dossier de destination.', text_color="#AA0000", size=(60,1), background_color=DARK_BG, visible=False, key='-WARNING_OUTPUT_FOLDER-'),
@@ -101,9 +115,8 @@ class App:
         ]
 
         videos_col = [
-            # [sg.Text(size=(15, 2), key='output')],
             [sg.Canvas(size=(500, 500), key="canvas", background_color="black")],
-            [sg.Slider(size=(40, 20), range=(0, 100), resolution=1, key="slider", orientation="h", enable_events=True, background_color=(LIGHT_DARK_BG), border_width=0), sg.Text("", key="counter", background_color=DARK_BG, size=(10, 1))],
+            [sg.Slider(size=(40, 20), range=(0, 100), enable_events=True, resolution=1, key="slider", orientation="h", background_color=(LIGHT_DARK_BG), border_width=0), sg.Text("", key="counter", background_color=DARK_BG, size=(10, 1))],
             [
                 sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_previous, image_size=(50, 50), image_subsample=2, border_width=0, key='PREVIOUS_FRAME'),
                 sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_restart, image_size=(50, 50), image_subsample=2, border_width=0, key='PLAY_BUTTON'),
@@ -143,8 +156,7 @@ class App:
                 self.app_starting = False
                 self.window.Element("-LOADING_BLUR_VIDEO-").Update(visible=False)
                 self.window.Element("-PROGRESS_BAR-").Update(visible=False, current_count=0)
-                self.window.Element("-BLUR_VIDEO_FOLDER_BUTTON-").Update(disabled=False)
-                self.window.Element("-BLUR_VIDEO_BUTTON-").Update(disabled=False)
+                self.window.Element("-APPLY-").Update(disabled=False)
             
             event, values = self.window.Read(100)
 
@@ -153,11 +165,8 @@ class App:
                     json.dump(self.cache, outfile)
                 break
 
-            if len(values[0]) > 0:
-                self.name_blur = values[0]
 
-
-            if event == '-FOLDER_PATH-':                         # Folder name was filled in, make a list of files in the folder
+            if event == '-FOLDER_PATH-': # Folder name was filled in, make a list of files in the folder
                 self.define_files_list(values)
 
             if event == '-OUTPUT_FOLDER_PATH-':
@@ -188,45 +197,7 @@ class App:
                     self.delay = 1 / self.vid.fps
                     # Update the video path text field
                     self.window.Element("-FOLDER_PATH-").Update(self.video_path)
-            
 
-            if event == "-BLUR_VIDEO_BUTTON-":
-                if self.video_path != None:
-                    if self.folder_path_destination != None:
-                        #Lance le deface dans un thread particulier
-                        logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : Creation de l\'objet thread pour le floutage d\'une video, dans le main')
-                        curr_thread = ThreadVideo(self.video_path,self.folder_path,self.folder_path_destination,self.name_blur,SHARED_MEMORY, self.extension) #création de l'objet
-                        x = threading.Thread(target=curr_thread.run_simple, args=()) #creation du thread executant la fonction run de notre objet
-                        x.start() #excution du thread
-                        self.window.Element("-BLUR_VIDEO_BUTTON-").Update(disabled=True) #update les boutons
-                        self.window.Element("-BLUR_VIDEO_FOLDER_BUTTON-").Update(disabled=True) 
-                        self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=False)
-                        self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=False)
-                    else:
-                        self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=True)
-                        self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=False)
-                else:
-                    self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=True)
-            
-            if event == "-BLUR_VIDEO_FOLDER_BUTTON-" and not self.blur_executing:
-                if self.files_path != None:
-                    if self.folder_path_destination != None:
-                        logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : Creation de l\'objet thread pour le floutage de plusieurs video, dans le main')
-                        curr_thread = ThreadVideo(self.files_path,self.folder_path,self.folder_path_destination,None,SHARED_MEMORY, self.extension) #création de l'objet
-                        x = threading.Thread(target=curr_thread.run_multiple, args=()) #creation du thread executant la fonction run de notre objet
-                        SHARED_MEMORY.files_to_blur = len(self.files_path)
-                        x.start() #excution du thread
-                        self.window.Element("-BLUR_VIDEO_FOLDER_BUTTON-").Update(disabled=True) #update les boutons
-                        self.window.Element("-BLUR_VIDEO_BUTTON-").Update(disabled=True)
-                        self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=False)
-                        self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=False)
-                    else:
-                        self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=True)
-                        self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=False)
-                else:
-                    self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=True)
-
-            
 
             if event == "PLAY_BUTTON" and self.video_path:
                 if self.play:
@@ -251,7 +222,19 @@ class App:
             if event == 'ROTATE_VIDEO' and self.video_path:
                 self.rotate_degree = (self.rotate_degree + 90) % 360
 
-            if event =='-AVI-':
+            if event == '-BLUR-': # CHECKBOX FLOUTAGE
+                self.blur = not self.blur
+
+            if event =='-VIDEO-': # RADIO VIDEO OU FOLDER
+                self.param = "Video"
+                self.window.Element("-NAME_TEXT-").Update(visible=True)
+                self.window.Element("-NAME_INPUT-").Update(visible=True)
+            if event =='-FOLDER-':
+                self.param = "Folder"
+                self.window.Element("-NAME_TEXT-").Update(visible=False)
+                self.window.Element("-NAME_INPUT-").Update(visible=False)
+
+            if event =='-AVI-': # RADIO FORMATS
                 self.extension = ".avi"
             if event =='-MKV-':
                 self.extension = ".mkv"
@@ -260,10 +243,60 @@ class App:
             if event =='-MP4-': 
                 self.extension = ".mp4"
 
+            if event == '-NAME_INPUT-': # NOM DU FICHIER DANS VARIABLE
+                self.name_blur = values['-NAME_INPUT-']
+
+            if event =='-ROT0-': # RADIO ROTATION
+                self.rotate_degree = 0
+            if event =='-ROT-90-':
+                self.rotate_degree = -90
+            if event =='-ROT90-': 
+                self.rotate_degree = 90
+            if event == '-ROT180-':
+                self.rotate_degree = 180
+
+            if event == "-APPLY-": # BOUTON APPLIQUER
+                if self.blur == True: 
+                    if self.param == "Video":
+                        if self.video_path != None:
+                            if self.folder_path_destination != None:
+                                #Lance le deface dans un thread particulier
+                                logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : Creation de l\'objet thread pour le floutage d\'une video, dans le main')
+                                curr_thread = ThreadVideo(self.video_path,self.folder_path,self.folder_path_destination,self.name_blur,SHARED_MEMORY, self.extension) #création de l'objet
+                                x = threading.Thread(target=curr_thread.run_simple, args=()) #creation du thread executant la fonction run de notre objet
+                                x.start() #excution du thread
+                                self.window.Element("-APPLY-").Update(disabled=True) #update les boutons
+                                self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=False)
+                                self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=False)
+                            else:
+                                self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=True)
+                                self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=False)
+                        else:
+                            self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=True)
+
+                    if self.param == "Folder":
+                        print("DOSSIER")
+                        if self.files_path != None:
+                            if self.folder_path_destination != None:
+                                logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : Creation de l\'objet thread pour le floutage de plusieurs video, dans le main')
+                                curr_thread = ThreadVideo(self.files_path,self.folder_path,self.folder_path_destination,None,SHARED_MEMORY, self.extension) #création de l'objet
+                                x = threading.Thread(target=curr_thread.run_multiple, args=()) #creation du thread executant la fonction run de notre objet
+                                SHARED_MEMORY.files_to_blur = len(self.files_path)
+                                x.start() #excution du thread
+                                self.window.Element("-APPLY-").Update(disabled=True) #update les boutons
+                                self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=False)
+                                self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=False)
+                            else:
+                                self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=True)
+                                self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=False)
+                        else:
+                            self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=True)
+                else:
+                    # TODO ENREGISTRER VIDEO AVEC PARAM SANS FLOUTAGE
+                    print("TODO")
+
             if event == "slider":
-                # self.play = False
                 self.set_frame(int(values["slider"]))
-                # print(values["slider"])
         # --------------------------------- Close & Exit ---------------------------------
         self.window.Close()
         sys.exit()
@@ -312,9 +345,9 @@ class App:
                     self.frame += 1
                     self.update_counter(self.frame)
 
-            # Uncomment these to be able to manually count fps
-            # print(str(self.next) + " It's " + str(time.ctime()))
-            # self.next = int(self.next) + 1
+            #Uncomment these to be able to manually count fps
+            #print(str(self.next) + " It's " + str(time.ctime()))
+            #self.next = int(self.next) + 1
         # The tkinter .after method lets us recurse after a delay without reaching recursion limit. We need to wait
         # between each frame to achieve proper fps, but also count the time it took to generate the previous frame.
         self.canvas.after(abs(int((self.delay - (time.time() - start_time)) * 1000)), self.update)
