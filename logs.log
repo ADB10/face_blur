@@ -364,3 +364,6 @@ INFO:root:Main : 02/03/2021 14:15:55 : Creation de l'objet thread pour le flouta
 INFO:root:02/03/2021 14:15:55Creation d"un thread
 WARNING:imageio_ffmpeg:IMAGEIO FFMPEG_WRITER WARNING: input image is not divisible by macro_block_size=16, resizing from (1920, 1080) to (1920, 1088) to ensure video compatibility with most codecs and players. To prevent resizing, make your input image divisible by the macro_block_size or set the macro_block_size to 1 (risking incompatibility).
 INFO:root:Thread : 02/03/2021 14:16:48Fin d"un thread
+INFO:root:Main : 16/03/2021 08:56:59 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:16/03/2021 08:56:59Creation d"un thread
+INFO:root:Thread : 16/03/2021 08:57:03Fin d"un thread

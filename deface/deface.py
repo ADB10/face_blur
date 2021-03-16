@@ -89,6 +89,14 @@ def cam_read_iter(reader):
     while True:
         yield reader.get_next_data()
 
+def rotate_frame(frame, rotate):
+    if(rotate == 90):
+        frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+    elif(rotate == -90) or (rotate == 270):
+        frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    elif(rotate == 180):
+        frame = cv2.rotate(frame, cv2.ROTATE_180)
+    return frame
 
 def video_detect(
         ipath: str,
@@ -131,6 +139,8 @@ def video_detect(
         writer: imageio.plugins.ffmpeg.FfmpegFormat.Writer = imageio.get_writer(
             opath, format='FFMPEG', mode='I', fps=meta['fps'], **ffmpeg_config
         )
+    
+    rotate_deg = shared_mem.rotate
 
     for frame in read_iter:
         # Perform network inference, get bb dets but discard landmark predictions
@@ -146,6 +156,8 @@ def video_detect(
             replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores
         )
 
+        if shared_mem.rotate != 0:
+            frame = rotate_frame(frame, rotate_deg)
         if opath is not None:
             writer.append_data(frame)
 

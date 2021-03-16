@@ -256,7 +256,8 @@ class App:
                 self.rotate_degree = 180
 
             if event == "-APPLY-": # BOUTON APPLIQUER
-                if self.blur == True: 
+                if self.blur == True:
+                    SHARED_MEMORY.rotate = self.rotate_degree
                     if self.param == "Video":
                         if self.video_path != None:
                             if self.folder_path_destination != None:
@@ -325,6 +326,16 @@ class App:
         thread = threading.Thread(target=self.update, args=())
         thread.daemon = 1
         thread.start()
+    
+    # return une frame rotate si demandé
+    def rotate_frame(self, frame):
+        if(self.rotate_degree == 90):
+            frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+        elif(self.rotate_degree == -90) or (self.rotate_degree == 270):
+            frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        elif(self.rotate_degree == 180):
+            frame = cv2.rotate(frame, cv2.ROTATE_180)
+        return frame
 
     def update(self):
         """Update the canvas element with the next video frame recursively"""
@@ -335,12 +346,13 @@ class App:
                 ret, frame = self.vid.get_frame()
                 
                 if ret:
+                    if(self.rotate_degree != 0):
+                        frame = self.rotate_frame(frame)
+
                     self.photo = PIL.ImageTk.PhotoImage(
                         image=PIL.Image.fromarray(frame).resize((self.vid_width, self.vid_height), Image.NEAREST)
                     )
                     self.canvas.create_image(0, 0, image=self.photo, anchor=tk.NW)
-                    if(self.rotate_degree!=0):
-                        frame = cv2.rotate(frame, self.rotate_degree)
 
                     self.frame += 1
                     self.update_counter(self.frame)
