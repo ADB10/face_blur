@@ -3,3 +3,5 @@ output/*
 build/*
 cache.json
 logs.log
+deface/__pycache__/*
+thread_video/__pycache__/*
