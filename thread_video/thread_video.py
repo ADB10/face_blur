@@ -15,6 +15,7 @@ class SharedMemory:
         self.files_to_blur = 1 # nb de fichiers à flouter
         self.file_being_blur = 1 # numéro du fichier en train de se faire flouter
         self.rotate = 0
+        self.frame_rate = 30
 
 def resource_path(relative_path):
     try:

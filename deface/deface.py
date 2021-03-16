@@ -135,38 +135,47 @@ def video_detect(
     else:
         bar = tqdm.tqdm(dynamic_ncols=True, total=nframes)
 
+    rotate_deg = shared_mem.rotate
+    video_fps = meta['fps']
+    print(video_fps)
+    fps_rate = shared_mem.frame_rate / video_fps
+    frame_selected = fps_rate # incrementer cette var par fps_rate a chaque tour pour selectionner une image / fps_rate
+
     if opath is not None:
         writer: imageio.plugins.ffmpeg.FfmpegFormat.Writer = imageio.get_writer(
             opath, format='FFMPEG', mode='I', fps=meta['fps'], **ffmpeg_config
         )
-    
-    rotate_deg = shared_mem.rotate
 
     for frame in read_iter:
-        # Perform network inference, get bb dets but discard landmark predictions
-        dets, _ = centerface(frame, threshold=threshold)
 
-        shared_mem.progress += (1/nframes)*100
-        if(shared_mem.progress>100):
-            shared_mem.file_being_blur +=1
-            shared_mem.progress=0
+        if frame_selected > 1 or frame_selected == 0:
+            # Perform network inference, get bb dets but discard landmark predictions
+            dets, _ = centerface(frame, threshold=threshold)
 
-        anonymize_frame(
-            dets, frame, mask_scale=mask_scale,
-            replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores
-        )
+            shared_mem.progress += (1/nframes)*100
+            if(shared_mem.progress>100):
+                shared_mem.file_being_blur +=1
+                shared_mem.progress=0
 
-        if shared_mem.rotate != 0:
-            frame = rotate_frame(frame, rotate_deg)
-        if opath is not None:
-            writer.append_data(frame)
+            anonymize_frame(
+                dets, frame, mask_scale=mask_scale,
+                replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores
+            )
 
-        if enable_preview:
-            cv2.imshow('Preview of anonymization results (quit by pressing Q or Escape)', frame[:, :, ::-1])  # RGB -> RGB
-            if cv2.waitKey(1) & 0xFF in [ord('q'), 27]:  # 27 is the escape key code
-                cv2.destroyAllWindows()
-                break
-        bar.update()
+            if shared_mem.rotate != 0:
+                frame = rotate_frame(frame, rotate_deg)
+            if opath is not None:
+                writer.append_data(frame)
+
+            if enable_preview:
+                cv2.imshow('Preview of anonymization results (quit by pressing Q or Escape)', frame[:, :, ::-1])  # RGB -> RGB
+                if cv2.waitKey(1) & 0xFF in [ord('q'), 27]:  # 27 is the escape key code
+                    cv2.destroyAllWindows()
+                    break
+            bar.update()
+        print(frame_selected, fps_rate)
+        frame_selected += fps_rate%1
+
     reader.close()
     if opath is not None:
         writer.close()

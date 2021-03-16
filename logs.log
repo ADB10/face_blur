@@ -367,3 +367,18 @@ INFO:root:Thread : 02/03/2021 14:16:48Fin d"un thread
 INFO:root:Main : 16/03/2021 08:56:59 : Creation de l'objet thread pour le floutage d'une video, dans le main
 INFO:root:16/03/2021 08:56:59Creation d"un thread
 INFO:root:Thread : 16/03/2021 08:57:03Fin d"un thread
+INFO:root:Main : 16/03/2021 13:38:47 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:16/03/2021 13:38:47Creation d"un thread
+INFO:root:Thread : 16/03/2021 13:38:49Fin d"un thread
+INFO:root:Main : 16/03/2021 13:38:53 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:16/03/2021 13:38:53Creation d"un thread
+INFO:root:Thread : 16/03/2021 13:38:55Fin d"un thread
+INFO:root:Main : 16/03/2021 13:38:58 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:16/03/2021 13:38:58Creation d"un thread
+INFO:root:Main : 16/03/2021 13:39:40 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:16/03/2021 13:39:40Creation d"un thread
+INFO:root:Main : 16/03/2021 13:40:26 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:16/03/2021 13:40:26Creation d"un thread
+INFO:root:Main : 16/03/2021 13:40:55 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:16/03/2021 13:40:55Creation d"un thread
+INFO:root:Thread : 16/03/2021 13:42:52Fin d"un thread
