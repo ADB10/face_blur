@@ -74,7 +74,7 @@ class App:
         # First the window layout 2 columns
 
         left_col = [
-            [sg.FolderBrowse(button_text="Choisir le dossier des vidéos", target='-FOLDER_PATH-', initial_folder=self.cache["current_folder"], button_color=(WHITE_TEXT, LIGHT_DARK_BG))],
+            [sg.FolderBrowse(button_text="Choisir le dossier des vidéos", target='-FOLDER_PATH-', initial_folder=self.cache["current_folder"], button_color=(WHITE_TEXT, LIGHT_DARK_BG)), sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_rotate, image_size=(50, 50), image_subsample=2, border_width=0, key='-UPDATE_FILES-')],
             [sg.In(size=(60,1), default_text=self.cache["current_folder"], enable_events=True, background_color=LIGHT_DARK_BG, text_color=WHITE_TEXT, border_width=0, key='-FOLDER_PATH-')],
             [sg.Listbox(values=[], enable_events=True, size=(58,20), key='-FILE_LIST-')],
             [sg.Text('', size=(15, 2), background_color=DARK_BG)],
@@ -95,6 +95,12 @@ class App:
                 sg.Radio('-90°', "1", enable_events=True, key='-ROT-90-',background_color=DARK_BG), 
                 sg.Radio('90°', "1", enable_events=True, key='-ROT90-',background_color=DARK_BG),
                 sg.Radio('180°', "1", enable_events=True, key='-ROT180-',background_color=DARK_BG)
+            ],
+            [
+                sg.Text('ImgParSec', size=(10, 1), background_color=DARK_BG, text_color=WHITE_TEXT),
+                sg.Radio('30', "1", enable_events=True, default = True, key='-30FPS-',background_color=DARK_BG), 
+                sg.Radio('60', "1", enable_events=True, key='-60FPS-',background_color=DARK_BG), 
+                sg.Radio('120', "1", enable_events=True, key='-120FPS-',background_color=DARK_BG),
             ],
             [
                 sg.Text('Appliquer les paramètres pour :', size=(15, 2), background_color=DARK_BG),
@@ -165,15 +171,14 @@ class App:
                     json.dump(self.cache, outfile)
                 break
 
-
-            if event == '-FOLDER_PATH-': # Folder name was filled in, make a list of files in the folder
+            elif event == '-FOLDER_PATH-' or event == '-UPDATE_FILES-': # Folder name was filled in, make a list of files in the folder
                 self.define_files_list(values)
 
-            if event == '-OUTPUT_FOLDER_PATH-':
+            elif event == '-OUTPUT_FOLDER_PATH-':
                 self.folder_path_destination = values['-OUTPUT_FOLDER_PATH-']
                 self.cache["destination_folder"] = self.folder_path_destination
 
-            if event == '-FILE_LIST-':    # A file was chosen from the listbox
+            elif event == '-FILE_LIST-':    # A file was chosen from the listbox
                 self.video_path = None
                 try:
                     self.video_path =os.path.join(self.folder_path, values['-FILE_LIST-'][0])
@@ -195,11 +200,11 @@ class App:
                     # Reset frame count
                     self.frame = 0
                     self.delay = 1 / self.vid.fps
-                    # Update the video path text field
-                    self.window.Element("-FOLDER_PATH-").Update(self.video_path)
+                    # Update the video path text field j'ai suppr pour pouvoir actauliser le folder
+                    # self.window.Element("-FOLDER_PATH-").Update(self.video_path)
 
 
-            if event == "PLAY_BUTTON" and self.video_path:
+            elif event == "PLAY_BUTTON" and self.video_path:
                 if self.play:
                     self.play = False
                     #self.window.Element("PLAY_BUTTON").Update("Play")
@@ -209,53 +214,60 @@ class App:
                     #self.window.Element("PLAY_BUTTON").Update("Pause")
                     self.window.Element("PLAY_BUTTON").Update(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_pause, image_size=(50, 50), image_subsample=2)
 
-            if event == 'NEXT_FRAME' and self.video_path:
+            elif event == 'NEXT_FRAME' and self.video_path:
                 # Jump forward a frame TODO: let user decide how far to jump
                 if self.frame != self.frames :
                     self.set_frame(self.frame + 1)
 
-            if event == 'PREVIOUS_FRAME' and self.video_path:
+            elif event == 'PREVIOUS_FRAME' and self.video_path:
                 # Jump forward a frame TODO: let user decide how far to jump
                 if self.frame != 0 :
                     self.set_frame(self.frame - 1)
 
-            if event == 'ROTATE_VIDEO' and self.video_path:
+            elif event == 'ROTATE_VIDEO' and self.video_path:
                 self.rotate_degree = (self.rotate_degree + 90) % 360
 
-            if event == '-BLUR-': # CHECKBOX FLOUTAGE
+            elif event == '-BLUR-': # CHECKBOX FLOUTAGE
                 self.blur = not self.blur
 
-            if event =='-VIDEO-': # RADIO VIDEO OU FOLDER
+            elif event =='-VIDEO-': # RADIO VIDEO OU FOLDER
                 self.param = "Video"
                 self.window.Element("-NAME_TEXT-").Update(visible=True)
                 self.window.Element("-NAME_INPUT-").Update(visible=True)
-            if event =='-FOLDER-':
+            elif event =='-FOLDER-':
                 self.param = "Folder"
                 self.window.Element("-NAME_TEXT-").Update(visible=False)
                 self.window.Element("-NAME_INPUT-").Update(visible=False)
 
-            if event =='-AVI-': # RADIO FORMATS
+            elif event =='-AVI-': # RADIO FORMATS
                 self.extension = ".avi"
-            if event =='-MKV-':
+            elif event =='-MKV-':
                 self.extension = ".mkv"
-            if event =='-MOV-':
+            elif event =='-MOV-':
                 self.extension = ".mov"
-            if event =='-MP4-': 
+            elif event =='-MP4-': 
                 self.extension = ".mp4"
 
-            if event == '-NAME_INPUT-': # NOM DU FICHIER DANS VARIABLE
+            elif event == '-NAME_INPUT-': # NOM DU FICHIER DANS VARIABLE
                 self.name_blur = values['-NAME_INPUT-']
 
-            if event =='-ROT0-': # RADIO ROTATION
+            elif event =='-ROT0-': # RADIO ROTATION
                 self.rotate_degree = 0
-            if event =='-ROT-90-':
+            elif event =='-ROT-90-':
                 self.rotate_degree = -90
-            if event =='-ROT90-': 
+            elif event =='-ROT90-': 
                 self.rotate_degree = 90
-            if event == '-ROT180-':
+            elif event == '-ROT180-':
                 self.rotate_degree = 180
+            
+            elif event =='-30FPS-':
+                SHARED_MEMORY.frame_rate = 30
+            elif event =='-60FPS-': 
+                SHARED_MEMORY.frame_rate = 60
+            elif event == '-120FPS-':
+                SHARED_MEMORY.frame_rate = 120
 
-            if event == "-APPLY-": # BOUTON APPLIQUER
+            elif event == "-APPLY-": # BOUTON APPLIQUER
                 if self.blur == True:
                     SHARED_MEMORY.rotate = self.rotate_degree
                     if self.param == "Video":
@@ -296,7 +308,7 @@ class App:
                     # TODO ENREGISTRER VIDEO AVEC PARAM SANS FLOUTAGE
                     print("TODO")
 
-            if event == "slider":
+            elif event == "slider":
                 self.set_frame(int(values["slider"]))
         # --------------------------------- Close & Exit ---------------------------------
         self.window.Close()

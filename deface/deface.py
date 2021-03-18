@@ -137,22 +137,21 @@ def video_detect(
 
     rotate_deg = shared_mem.rotate
     video_fps = meta['fps']
-    print(video_fps)
     fps_rate = shared_mem.frame_rate / video_fps
     frame_selected = fps_rate # incrementer cette var par fps_rate a chaque tour pour selectionner une image / fps_rate
 
     if opath is not None:
         writer: imageio.plugins.ffmpeg.FfmpegFormat.Writer = imageio.get_writer(
-            opath, format='FFMPEG', mode='I', fps=meta['fps'], **ffmpeg_config
+            opath, format='FFMPEG', mode='I', fps=shared_mem.frame_rate, **ffmpeg_config
         )
 
     for frame in read_iter:
 
-        if frame_selected > 1 or frame_selected == 0:
+        if frame_selected >= 1 or frame_selected == 0:
             # Perform network inference, get bb dets but discard landmark predictions
             dets, _ = centerface(frame, threshold=threshold)
 
-            shared_mem.progress += (1/nframes)*100
+            
             if(shared_mem.progress>100):
                 shared_mem.file_being_blur +=1
                 shared_mem.progress=0
@@ -173,8 +172,10 @@ def video_detect(
                     cv2.destroyAllWindows()
                     break
             bar.update()
-        print(frame_selected, fps_rate)
-        frame_selected += fps_rate%1
+        
+        shared_mem.progress += (1/nframes)*100
+        # print(frame_selected, fps_rate)
+        frame_selected = (frame_selected + fps_rate) % 1
 
     reader.close()
     if opath is not None:
