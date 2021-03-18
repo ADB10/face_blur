@@ -12,6 +12,7 @@ from thread_video.thread_video import ThreadVideo, SharedMemory
 from datetime import datetime
 from multiprocessing import Value
 import json
+import keyboard
 
 from deface.centerface import CenterFace
 from deface.deface import *
@@ -68,13 +69,17 @@ class App:
         self.extension = None
         self.param = "Video"
         self.blur = True
+        self.pas = 1
 
         # --------------------------------- Define Layout ---------------------------------
 
         # First the window layout 2 columns
 
         left_col = [
-            [sg.FolderBrowse(button_text="Choisir le dossier des vidéos", target='-FOLDER_PATH-', initial_folder=self.cache["current_folder"], button_color=(WHITE_TEXT, LIGHT_DARK_BG)), sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_rotate, image_size=(50, 50), image_subsample=2, border_width=0, key='-UPDATE_FILES-')],
+            [
+                sg.FolderBrowse(button_text="Choisir le dossier des vidéos", target='-FOLDER_PATH-', initial_folder=self.cache["current_folder"], button_color=(WHITE_TEXT, LIGHT_DARK_BG)), 
+                sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_rotate, image_size=(50, 50), image_subsample=2, border_width=0, key='-UPDATE_FILES-')
+            ],
             [sg.In(size=(60,1), default_text=self.cache["current_folder"], enable_events=True, background_color=LIGHT_DARK_BG, text_color=WHITE_TEXT, border_width=0, key='-FOLDER_PATH-')],
             [sg.Listbox(values=[], enable_events=True, size=(58,20), key='-FILE_LIST-')],
             [sg.Text('', size=(15, 2), background_color=DARK_BG)],
@@ -124,8 +129,9 @@ class App:
             [sg.Canvas(size=(500, 500), key="canvas", background_color="black")],
             [sg.Slider(size=(40, 20), range=(0, 100), enable_events=True, resolution=1, key="slider", orientation="h", background_color=(LIGHT_DARK_BG), border_width=0), sg.Text("", key="counter", background_color=DARK_BG, size=(10, 1))],
             [
+                #sg.Radio('1', "1", enable_events=True, default = True, key='-PAS1-',background_color=DARK_BG), 
                 sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_previous, image_size=(50, 50), image_subsample=2, border_width=0, key='PREVIOUS_FRAME'),
-                sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_restart, image_size=(50, 50), image_subsample=2, border_width=0, key='PLAY_BUTTON'),
+                sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_restart, image_size=(50, 50), image_subsample=2, border_width=0, focus = True, key='PLAY_BUTTON'),
                 sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_next, image_size=(50, 50), image_subsample=2, border_width=0, key='NEXT_FRAME'),
                 sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_rotate, image_size=(50, 50), image_subsample=2, border_width=0, key='ROTATE_VIDEO')
             ]
@@ -135,7 +141,7 @@ class App:
         layout = [[sg.Column(left_col, background_color=DARK_BG), sg.Column(videos_col, element_justification='c', background_color=DARK_BG)]]
 
         # --------------------------------- Create Window ---------------------------------
-        self.window = sg.Window('BlurFace - Floutage de vidéo automatique', layout, resizable=True, background_color=DARK_BG).Finalize()
+        self.window = sg.Window('BlurFace - Floutage de vidéo automatique', layout, resizable=True, background_color=DARK_BG, return_keyboard_events=True).Finalize()
 
         # set return_keyboard_events=True to make hotkeys for video playback
         # Get the tkinter canvas for displaying the video
@@ -185,6 +191,7 @@ class App:
                 except AttributeError:
                     print("no video selected, doing nothing")
                 if self.video_path:
+                    self.window.Element('PLAY_BUTTON').SetFocus()
                     # Initialize video
                     self.vid = MyVideoCapture(self.video_path)
                     # Calculate new video dimensions
@@ -204,7 +211,8 @@ class App:
                     # self.window.Element("-FOLDER_PATH-").Update(self.video_path)
 
 
-            elif event == "PLAY_BUTTON" and self.video_path:
+            elif (event == 'PLAY_BUTTON' or 'Spacebar' in event) and self.video_path:
+                self.window.Element('PLAY_BUTTON').SetFocus()
                 if self.play:
                     self.play = False
                     #self.window.Element("PLAY_BUTTON").Update("Play")
@@ -214,12 +222,12 @@ class App:
                     #self.window.Element("PLAY_BUTTON").Update("Pause")
                     self.window.Element("PLAY_BUTTON").Update(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_pause, image_size=(50, 50), image_subsample=2)
 
-            elif event == 'NEXT_FRAME' and self.video_path:
+            elif (event == 'NEXT_FRAME' or 'Right' in event) and self.video_path:
                 # Jump forward a frame TODO: let user decide how far to jump
                 if self.frame != self.frames :
                     self.set_frame(self.frame + 1)
 
-            elif event == 'PREVIOUS_FRAME' and self.video_path:
+            elif (event == 'PREVIOUS_FRAME' or 'Left' in event) and self.video_path:
                 # Jump forward a frame TODO: let user decide how far to jump
                 if self.frame != 0 :
                     self.set_frame(self.frame - 1)
@@ -310,9 +318,11 @@ class App:
 
             elif event == "slider":
                 self.set_frame(int(values["slider"]))
+
         # --------------------------------- Close & Exit ---------------------------------
         self.window.Close()
         sys.exit()
+
 
 
     # affiche les files dans la listbox
