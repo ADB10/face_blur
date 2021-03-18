@@ -2,17 +2,19 @@ import PySimpleGUI as sg
 import os
 import sys
 import threading
+from multiprocessing import Process
+from multiprocessing import shared_memory
 import time
 import tkinter as tk
 import PIL
 from PIL import Image, ImageTk
 import cv2
 import logging
-from thread_video.thread_video import ThreadVideo, SharedMemory
+from thread_video.thread_video import *
 from datetime import datetime
 from multiprocessing import Value
 import json
-import keyboard
+from time import sleep
 
 from deface.centerface import CenterFace
 from deface.deface import *
@@ -27,7 +29,15 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 logging.basicConfig(filename=resource_path('logs.log'), level=logging.DEBUG) #Create our logging file
-SHARED_MEMORY = SharedMemory()
+
+shared_mem = shared_memory.ShareableList([False,False,0.0,1,1,0,None])
+# 0 - deface_executing = False # floutage en cours ?
+# 1 - deface_finish = False # le floutage vient de se terminer ?
+# 2 - progress = 0.0 # progress bar en %
+# 3 - files_to_blur = 1 # nb de fichiers à flouter
+# 4 - file_being_blur = 1 # numéro du fichier en train de se faire flouter
+# 5 - rotate = 0
+# 6 - frame_rate = None
 
 class App:
 
@@ -69,7 +79,8 @@ class App:
         self.extension = None
         self.param = "Video"
         self.blur = True
-        self.pas = 1
+        self.etat_lecture = False
+
 
         # --------------------------------- Define Layout ---------------------------------
 
@@ -96,21 +107,21 @@ class App:
             ],
             [
                 sg.Text('Rotation', size=(10, 1), background_color=DARK_BG, text_color=WHITE_TEXT),
-                sg.Radio('0°', "1", enable_events=True, default = True, key='-ROT0-',background_color=DARK_BG), 
-                sg.Radio('-90°', "1", enable_events=True, key='-ROT-90-',background_color=DARK_BG), 
-                sg.Radio('90°', "1", enable_events=True, key='-ROT90-',background_color=DARK_BG),
-                sg.Radio('180°', "1", enable_events=True, key='-ROT180-',background_color=DARK_BG)
+                sg.Radio('0°', "2", enable_events=True, default = True, key='-ROT0-',background_color=DARK_BG), 
+                sg.Radio('-90°', "2", enable_events=True, key='-ROT-90-',background_color=DARK_BG), 
+                sg.Radio('90°', "2", enable_events=True, key='-ROT90-',background_color=DARK_BG),
+                sg.Radio('180°', "2", enable_events=True, key='-ROT180-',background_color=DARK_BG)
             ],
             [
-                sg.Text('ImgParSec', size=(10, 1), background_color=DARK_BG, text_color=WHITE_TEXT),
-                sg.Radio('30', "1", enable_events=True, default = True, key='-30FPS-',background_color=DARK_BG), 
-                sg.Radio('60', "1", enable_events=True, key='-60FPS-',background_color=DARK_BG), 
-                sg.Radio('120', "1", enable_events=True, key='-120FPS-',background_color=DARK_BG),
+                sg.Text('IPS', size=(10, 1), background_color=DARK_BG, text_color=WHITE_TEXT),
+                sg.Radio('defaut', "3", enable_events=True, key='-Default-',background_color=DARK_BG), 
+                sg.Radio('30', "3", enable_events=True, key='-30FPS-',background_color=DARK_BG), 
+                sg.Radio('60', "3", enable_events=True, key='-60FPS-',background_color=DARK_BG),
             ],
             [
                 sg.Text('Appliquer les paramètres pour :', size=(15, 2), background_color=DARK_BG),
-                sg.Radio('Vidéo', "2", default=True, enable_events=True, key='-VIDEO-',background_color=DARK_BG), 
-                sg.Radio('Dossier', "2", enable_events=True, key='-FOLDER-',background_color=DARK_BG)
+                sg.Radio('Vidéo', "4", default=True, enable_events=True, key='-VIDEO-',background_color=DARK_BG), 
+                sg.Radio('Dossier', "4", enable_events=True, key='-FOLDER-',background_color=DARK_BG)
             ],
             [
                 sg.Text('Nom du fichier', size=(15, 1), enable_events=True, background_color=DARK_BG, text_color=WHITE_TEXT,visible=True, key='-NAME_TEXT-'), 
@@ -132,8 +143,7 @@ class App:
                 #sg.Radio('1', "1", enable_events=True, default = True, key='-PAS1-',background_color=DARK_BG), 
                 sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_previous, image_size=(50, 50), image_subsample=2, border_width=0, key='PREVIOUS_FRAME'),
                 sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_restart, image_size=(50, 50), image_subsample=2, border_width=0, focus = True, key='PLAY_BUTTON'),
-                sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_next, image_size=(50, 50), image_subsample=2, border_width=0, key='NEXT_FRAME'),
-                sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_rotate, image_size=(50, 50), image_subsample=2, border_width=0, key='ROTATE_VIDEO')
+                sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_next, image_size=(50, 50), image_subsample=2, border_width=0, key='NEXT_FRAME')
             ]
         ]
 
@@ -154,17 +164,17 @@ class App:
         # --------------------------------- Event Loop ---------------------------------
         while True:
 
-            if SHARED_MEMORY.deface_executing:
-                text_progress = "En cours de floutage... " + str(SHARED_MEMORY.file_being_blur) + "/"+ str(SHARED_MEMORY.files_to_blur) + " | " + str(round(SHARED_MEMORY.progress, 2)) + "%"
+            if shared_mem[0]:
+                text_progress = "En cours de floutage... " + str(shared_mem[4]) + "/"+ str(shared_mem[3]) + " | " + str(round(shared_mem[2], 2)) + "%"
                 self.window.Element("-LOADING_BLUR_VIDEO-").Update(visible=True)
-                self.window.Element("-PROGRESS_BAR-").Update(visible=True, current_count=SHARED_MEMORY.progress)
+                self.window.Element("-PROGRESS_BAR-").Update(visible=True, current_count=shared_mem[2])
                 self.window.Element("-LOADING_BLUR_VIDEO-").Update(text_progress)
             else:
                 if self.app_starting and self.folder_path != None: # affiche directement la liste des fichiers si presente dans le cache
                     self.define_files_list(None)
-                if SHARED_MEMORY.deface_finish: # dans le cas ou une video vient de se faire flouter et quil faut actualiser le dossier courant
+                if shared_mem[1]: # dans le cas ou une video vient de se faire flouter et quil faut actualiser le dossier courant
                     self.define_files_list(None)
-                    SHARED_MEMORY.deface_finish = False 
+                    shared_mem[1] = False 
                 self.app_starting = False
                 self.window.Element("-LOADING_BLUR_VIDEO-").Update(visible=False)
                 self.window.Element("-PROGRESS_BAR-").Update(visible=False, current_count=0)
@@ -232,9 +242,6 @@ class App:
                 if self.frame != 0 :
                     self.set_frame(self.frame - 1)
 
-            elif event == 'ROTATE_VIDEO' and self.video_path:
-                self.rotate_degree = (self.rotate_degree + 90) % 360
-
             elif event == '-BLUR-': # CHECKBOX FLOUTAGE
                 self.blur = not self.blur
 
@@ -268,24 +275,24 @@ class App:
             elif event == '-ROT180-':
                 self.rotate_degree = 180
             
-            elif event =='-30FPS-':
-                SHARED_MEMORY.frame_rate = 30
-            elif event =='-60FPS-': 
-                SHARED_MEMORY.frame_rate = 60
-            elif event == '-120FPS-':
-                SHARED_MEMORY.frame_rate = 120
+            elif event =='-Default-':
+                shared_mem[6] = None
+            elif event =='-30FPS-': 
+                shared_mem[6] = 30
+            elif event == '-60FPS-':
+                shared_mem[6] = 60
 
             elif event == "-APPLY-": # BOUTON APPLIQUER
                 if self.blur == True:
-                    SHARED_MEMORY.rotate = self.rotate_degree
+                    shared_mem[5] = self.rotate_degree
                     if self.param == "Video":
                         if self.video_path != None:
                             if self.folder_path_destination != None:
                                 #Lance le deface dans un thread particulier
                                 logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : Creation de l\'objet thread pour le floutage d\'une video, dans le main')
-                                curr_thread = ThreadVideo(self.video_path,self.folder_path,self.folder_path_destination,self.name_blur,SHARED_MEMORY, self.extension) #création de l'objet
-                                x = threading.Thread(target=curr_thread.run_simple, args=()) #creation du thread executant la fonction run de notre objet
-                                x.start() #excution du thread
+                                curr_thread = ThreadVideo(self.video_path,self.folder_path,self.folder_path_destination,self.name_blur,self.extension, shared_mem) #création de l'objet
+                                x = Process(target=curr_thread.run_simple, args=()) #creation du thread executant la fonction run de notre objet
+                                x.start() #excution du processus
                                 self.window.Element("-APPLY-").Update(disabled=True) #update les boutons
                                 self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=False)
                                 self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=False)
@@ -300,9 +307,9 @@ class App:
                         if self.files_path != None:
                             if self.folder_path_destination != None:
                                 logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : Creation de l\'objet thread pour le floutage de plusieurs video, dans le main')
-                                curr_thread = ThreadVideo(self.files_path,self.folder_path,self.folder_path_destination,None,SHARED_MEMORY, self.extension) #création de l'objet
-                                x = threading.Thread(target=curr_thread.run_multiple, args=()) #creation du thread executant la fonction run de notre objet
-                                SHARED_MEMORY.files_to_blur = len(self.files_path)
+                                curr_thread = ThreadVideo(self.files_path,self.folder_path,self.folder_path_destination,None, self.extension, shared_mem) #création de l'objet
+                                x = Process(target=curr_thread.run_multiple, args=()) #creation du thread executant la fonction run de notre objet
+                                shared_mem[3] = len(self.files_path)
                                 x.start() #excution du thread
                                 self.window.Element("-APPLY-").Update(disabled=True) #update les boutons
                                 self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=False)
@@ -313,8 +320,8 @@ class App:
                         else:
                             self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=True)
                 else:
-                    # TODO ENREGISTRER VIDEO AVEC PARAM SANS FLOUTAGE
-                    print("TODO")
+                    x = Process(target=save_video, args=(self.name_blur,self.folder_path_destination,self.video_path,self.rotate_degree,self.extension,shared_mem[6])) #creation du thread executant la fonction run de notre objet
+                    x.start() #excution du thread
 
             elif event == "slider":
                 self.set_frame(int(values["slider"]))
@@ -327,7 +334,7 @@ class App:
 
     # affiche les files dans la listbox
     def define_files_list(self, values):
-        if not self.app_starting and not SHARED_MEMORY.deface_finish:
+        if not self.app_starting and not shared_mem[1]:
             self.folder_path = values['-FOLDER_PATH-']
             self.cache["current_folder"] = values['-FOLDER_PATH-']
         try:

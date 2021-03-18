@@ -8,7 +8,6 @@ import os
 import sys
 from typing import Dict, Tuple
 
-import tqdm
 import skimage.draw
 import numpy as np
 import imageio
@@ -18,6 +17,7 @@ import time
 
 # from deface import __version__
 from deface.centerface import CenterFace
+from multiprocessing import Pipe
 
 
 # TODO: Optionally preserve audio track?
@@ -114,7 +114,18 @@ def video_detect(
         shared_mem=None
 ):
     try:
-        reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath)
+        if shared_mem[6] is None : #si on precise pas les fps, on recup les fps par defaut
+            reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath)
+            fps2 = reader.get_meta_data()['fps'] #on recup les fps
+            reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath,fps=fps2)
+        else : #sinon on met les fps normaux
+            reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath)
+            fps2 = reader.get_meta_data()['fps'] #on recup les fps
+            if(shared_mem[6]>int(fps2)): # si nb de fps specifié superieur a nb de fps de base
+                reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath,fps=fps2) # on remets le nb de fps de base
+            else:
+                reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath,fps=shared_mem[6]) # sinon cest ok
+
         meta = reader.get_meta_data()
         _ = meta['size']
     except:
@@ -130,58 +141,50 @@ def video_detect(
     else:
         read_iter = reader.iter_data()
         nframes = reader.count_frames()
-    if nested:
-        bar = tqdm.tqdm(dynamic_ncols=True, total=nframes, position=1, leave=True)
-    else:
-        bar = tqdm.tqdm(dynamic_ncols=True, total=nframes)
 
-    rotate_deg = shared_mem.rotate
-    video_fps = meta['fps']
-    fps_rate = shared_mem.frame_rate / video_fps
-    frame_selected = fps_rate # incrementer cette var par fps_rate a chaque tour pour selectionner une image / fps_rate
+    rotate_deg = shared_mem[5] #rotate
 
     if opath is not None:
-        writer: imageio.plugins.ffmpeg.FfmpegFormat.Writer = imageio.get_writer(
-            opath, format='FFMPEG', mode='I', fps=shared_mem.frame_rate, **ffmpeg_config
-        )
+        if shared_mem[6] is None : # si on a specifié un nb de fps, on l'indique dans le writer sinon on mets les fps de la video de base
+            writer: imageio.plugins.ffmpeg.FfmpegFormat.Writer = imageio.get_writer(
+                    opath, format='FFMPEG', mode='I', fps=meta['fps'], **ffmpeg_config
+                )
+        else :
+            if(shared_mem[6]>int(fps2)): # si nb de fps specifié superieur a nb de fps de base
+                writer: imageio.plugins.ffmpeg.FfmpegFormat.Writer = imageio.get_writer(
+                    opath, format='FFMPEG', mode='I', fps=fps2, **ffmpeg_config
+                )
+            else:
+                writer: imageio.plugins.ffmpeg.FfmpegFormat.Writer = imageio.get_writer(
+                    opath, format='FFMPEG', mode='I', fps=shared_mem[6], **ffmpeg_config
+                )
 
     for frame in read_iter:
 
-        if frame_selected >= 1 or frame_selected == 0:
-            # Perform network inference, get bb dets but discard landmark predictions
-            dets, _ = centerface(frame, threshold=threshold)
-
-            
-            if(shared_mem.progress>100):
-                shared_mem.file_being_blur +=1
-                shared_mem.progress=0
-
-            anonymize_frame(
-                dets, frame, mask_scale=mask_scale,
-                replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores
-            )
-
-            if shared_mem.rotate != 0:
-                frame = rotate_frame(frame, rotate_deg)
-            if opath is not None:
-                writer.append_data(frame)
-
-            if enable_preview:
-                cv2.imshow('Preview of anonymization results (quit by pressing Q or Escape)', frame[:, :, ::-1])  # RGB -> RGB
-                if cv2.waitKey(1) & 0xFF in [ord('q'), 27]:  # 27 is the escape key code
-                    cv2.destroyAllWindows()
-                    break
-            bar.update()
+        frame_selected = 0
+        # Perform network inference, get bb dets but discard landmark predictions
+        dets, _ = centerface(frame, threshold=threshold)
         
-        shared_mem.progress += (1/nframes)*100
-        # print(frame_selected, fps_rate)
-        frame_selected = (frame_selected + fps_rate) % 1
+        if(shared_mem[2]>100):
+            shared_mem[4] +=1
+            shared_mem[2]=0
+
+        anonymize_frame(
+            dets, frame, mask_scale=mask_scale,
+            replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores
+        )
+
+        if shared_mem[5] != 0:
+            frame = rotate_frame(frame, rotate_deg)
+            
+        if opath is not None:
+            writer.append_data(frame)
+
+        shared_mem[2] += (1/nframes)*100
 
     reader.close()
     if opath is not None:
         writer.close()
-    bar.close()
-
 
 def image_detect(
         ipath: str,
@@ -203,11 +206,6 @@ def image_detect(
         dets, frame, mask_scale=mask_scale,
         replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores
     )
-
-    if enable_preview:
-        cv2.imshow('Preview of anonymization results (quit by pressing Q or Escape)', frame[:, :, ::-1])  # RGB -> RGB
-        if cv2.waitKey(0) & 0xFF in [ord('q'), 27]:  # 27 is the escape key code
-            cv2.destroyAllWindows()
 
     imageio.imsave(opath, frame)
     # print(f'Output saved to {opath}')
@@ -284,7 +282,7 @@ def parse_cli_args():
     return args
 
 
-def main_deface(input_files, output_folder, name, shared_mem, extension):
+def main_deface(input_files, output_folder, name, extension, shared_mem):
 
     ipaths = input_files
     base_opath = output_folder # a changer pour folder output

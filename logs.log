@@ -396,3 +396,46 @@ INFO:root:Main : 18/03/2021 09:49:25 : Creation de l'objet thread pour le flouta
 INFO:root:18/03/2021 09:49:25Creation d"un thread
 WARNING:imageio_ffmpeg:IMAGEIO FFMPEG_WRITER WARNING: input image is not divisible by macro_block_size=16, resizing from (1920, 1080) to (1920, 1088) to ensure video compatibility with most codecs and players. To prevent resizing, make your input image divisible by the macro_block_size or set the macro_block_size to 1 (risking incompatibility).
 INFO:root:Thread : 18/03/2021 09:50:20Fin d"un thread
+INFO:root:Main : 18/03/2021 15:58:10 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:18/03/2021 15:58:10Creation d"un thread
+WARNING:imageio_ffmpeg:IMAGEIO FFMPEG_WRITER WARNING: input image is not divisible by macro_block_size=16, resizing from (306, 498) to (320, 512) to ensure video compatibility with most codecs and players. To prevent resizing, make your input image divisible by the macro_block_size or set the macro_block_size to 1 (risking incompatibility).
+INFO:root:Thread : 18/03/2021 15:58:13Fin d"un thread
+INFO:root:Main : 18/03/2021 15:59:13 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:18/03/2021 15:59:13Creation d"un thread
+INFO:root:Thread : 18/03/2021 15:59:14Fin d"un thread
+INFO:root:Main : 18/03/2021 15:59:24 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:18/03/2021 15:59:24Creation d"un thread
+WARNING:imageio_ffmpeg:IMAGEIO FFMPEG_WRITER WARNING: input image is not divisible by macro_block_size=16, resizing from (498, 306) to (512, 320) to ensure video compatibility with most codecs and players. To prevent resizing, make your input image divisible by the macro_block_size or set the macro_block_size to 1 (risking incompatibility).
+INFO:root:Thread : 18/03/2021 15:59:26Fin d"un thread
+INFO:root:Main : 18/03/2021 17:08:58 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:18/03/2021 17:08:58Creation d"un thread
+WARNING:imageio_ffmpeg:IMAGEIO FFMPEG_WRITER WARNING: input image is not divisible by macro_block_size=16, resizing from (498, 306) to (512, 320) to ensure video compatibility with most codecs and players. To prevent resizing, make your input image divisible by the macro_block_size or set the macro_block_size to 1 (risking incompatibility).
+INFO:root:Thread : 18/03/2021 17:09:02Fin d"un thread
+INFO:root:Main : 18/03/2021 17:17:46 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:18/03/2021 17:17:46Creation d"un thread
+WARNING:imageio_ffmpeg:IMAGEIO FFMPEG_WRITER WARNING: input image is not divisible by macro_block_size=16, resizing from (498, 306) to (512, 320) to ensure video compatibility with most codecs and players. To prevent resizing, make your input image divisible by the macro_block_size or set the macro_block_size to 1 (risking incompatibility).
+INFO:root:Thread : 18/03/2021 17:17:49Fin d"un thread
+INFO:root:Main : 18/03/2021 17:32:47 : Creation de l'objet thread pour le floutage de plusieurs video, dans le main
+INFO:root:Thread : 18/03/2021 17:32:47Creation d"un thread
+INFO:root:Thread : 18/03/2021 17:32:47Creation d"un thread
+WARNING:imageio_ffmpeg:IMAGEIO FFMPEG_WRITER WARNING: input image is not divisible by macro_block_size=16, resizing from (498, 306) to (512, 320) to ensure video compatibility with most codecs and players. To prevent resizing, make your input image divisible by the macro_block_size or set the macro_block_size to 1 (risking incompatibility).
+INFO:root:Process : 18/03/2021 17:32:57Fin d"un process
+INFO:root:Process : 18/03/2021 17:35:03Fin d"un process
+INFO:root:Main : 18/03/2021 17:35:40 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:18/03/2021 17:35:40Creation d"un process
+INFO:root:Process : 18/03/2021 17:36:36Fin d"un process
+INFO:root:Main : 18/03/2021 19:26:37 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:Main : 18/03/2021 19:30:48 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:Main : 18/03/2021 19:36:26 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:Main : 18/03/2021 19:36:54 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:Main : 18/03/2021 19:37:04 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:Main : 18/03/2021 19:37:04 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:Main : 18/03/2021 19:37:48 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:Main : 18/03/2021 19:39:03 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:Main : 18/03/2021 19:40:09 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:18/03/2021 19:40:09Creation d"un process
+INFO:root:Process : 18/03/2021 19:40:10Fin d"un process
+INFO:root:Main : 18/03/2021 23:28:50 : Creation de l'objet thread pour le floutage d'une video, dans le main
+INFO:root:18/03/2021 23:28:50Creation d"un process
+WARNING:imageio_ffmpeg:IMAGEIO FFMPEG_WRITER WARNING: input image is not divisible by macro_block_size=16, resizing from (498, 306) to (512, 320) to ensure video compatibility with most codecs and players. To prevent resizing, make your input image divisible by the macro_block_size or set the macro_block_size to 1 (risking incompatibility).
+INFO:root:Process : 18/03/2021 23:29:00Fin d"un process
