@@ -464,4 +464,5 @@ class MyVideoCapture:
             self.vid.release()
 
 if __name__ == '__main__':
+    multiprocessing.freeze_support()
     App()
