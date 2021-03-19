@@ -114,7 +114,7 @@ class App:
             ],
             [
                 sg.Text('IPS', size=(10, 1), background_color=DARK_BG, text_color=WHITE_TEXT),
-                sg.Radio('defaut', "3", enable_events=True, key='-Default-',background_color=DARK_BG), 
+                sg.Radio('defaut', "3", enable_events=True, default = True, key='-Default-',background_color=DARK_BG), 
                 sg.Radio('30', "3", enable_events=True, key='-30FPS-',background_color=DARK_BG), 
                 sg.Radio('60', "3", enable_events=True, key='-60FPS-',background_color=DARK_BG),
             ],
