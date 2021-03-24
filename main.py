@@ -59,7 +59,7 @@ class App:
 
         # ------ App states ------ #
         self.play = False  # Is the video currently playing?
-        self.delay = 0.023  # Delay between frames - not sure what it should be, not accurate playback
+        self.delay = 0.008  # Delay between frames - not sure what it should be, not accurate playback
         self.frame = 1  # Current frame
         self.frames = None  # Number of frames
         # ------ Other vars ------ #
@@ -93,10 +93,8 @@ class App:
             ],
             [sg.In(size=(60,1), default_text=self.cache["current_folder"], enable_events=True, background_color=LIGHT_DARK_BG, text_color=WHITE_TEXT, border_width=0, key='-FOLDER_PATH-')],
             [sg.Listbox(values=[], enable_events=True, size=(58,20), key='-FILE_LIST-')],
-            [sg.Text('', size=(15, 2), background_color=DARK_BG)],
             [sg.FolderBrowse(button_text="Choisir le dossier de destination", target='-OUTPUT_FOLDER_PATH-', initial_folder=self.cache["destination_folder"], button_color=(WHITE_TEXT, LIGHT_DARK_BG))],
             [sg.In(size=(60,1), default_text=self.cache["destination_folder"], enable_events=True, background_color=LIGHT_DARK_BG, text_color=WHITE_TEXT, border_width=0, key='-OUTPUT_FOLDER_PATH-')],
-            [sg.Text('', size=(15, 2), background_color=DARK_BG)],
             [sg.Checkbox('Flouter', size=(10,1), enable_events=True, default=True, background_color=DARK_BG, text_color=WHITE_TEXT, key='-BLUR-')],
             [
                 sg.Text('Format', size=(10, 1), background_color=DARK_BG, text_color=WHITE_TEXT),
@@ -137,21 +135,24 @@ class App:
         ]
 
         videos_col = [
-            [sg.Canvas(size=(500, 500), key="canvas", background_color="black")],
+            [sg.Canvas(size=(720, 480),key="canvas", background_color="black")],
             [sg.Slider(size=(40, 20), range=(0, 100), enable_events=True, resolution=1, key="slider", orientation="h", background_color=(LIGHT_DARK_BG), border_width=0), sg.Text("", key="counter", background_color=DARK_BG, size=(10, 1))],
             [
                 #sg.Radio('1', "1", enable_events=True, default = True, key='-PAS1-',background_color=DARK_BG), 
                 sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_previous, image_size=(50, 50), image_subsample=2, border_width=0, key='PREVIOUS_FRAME'),
                 sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_restart, image_size=(50, 50), image_subsample=2, border_width=0, focus = True, key='PLAY_BUTTON'),
                 sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_next, image_size=(50, 50), image_subsample=2, border_width=0, key='NEXT_FRAME')
+         
             ]
         ]
 
         # ----- Full layout -----
         layout = [[sg.Column(left_col, background_color=DARK_BG), sg.Column(videos_col, element_justification='c', background_color=DARK_BG)]]
 
+
         # --------------------------------- Create Window ---------------------------------
-        self.window = sg.Window('BlurFace - Floutage de vidéo automatique', layout, resizable=True, background_color=DARK_BG, return_keyboard_events=True).Finalize()
+        self.window = sg.Window('BlurFace - Floutage de vidéo automatique', layout, resizable=True, background_color=DARK_BG, return_keyboard_events=True,size=(1280,720)).Finalize()
+        self.window.bind('<Configure>',"Configure")
 
         # set return_keyboard_events=True to make hotkeys for video playback
         # Get the tkinter canvas for displaying the video
@@ -165,7 +166,10 @@ class App:
         while True:
 
             if shared_mem[0]:
-                text_progress = "En cours de floutage... " + str(shared_mem[4]) + "/"+ str(shared_mem[3]) + " | " + str(round(shared_mem[2], 2)) + "%"
+                if (self.blur == False) :
+                    text_progress = "En cours de conversion... " + str(shared_mem[4]) + "/"+ str(shared_mem[3]) + " | " + str(round(shared_mem[2], 2)) + "%"
+                else :
+                    text_progress = "En cours de floutage... " + str(shared_mem[4]) + "/"+ str(shared_mem[3]) + " | " + str(round(shared_mem[2], 2)) + "%"
                 self.window.Element("-LOADING_BLUR_VIDEO-").Update(visible=True)
                 self.window.Element("-PROGRESS_BAR-").Update(visible=True, current_count=shared_mem[2])
                 self.window.Element("-LOADING_BLUR_VIDEO-").Update(text_progress)
@@ -180,7 +184,7 @@ class App:
                 self.window.Element("-PROGRESS_BAR-").Update(visible=False, current_count=0)
                 self.window.Element("-APPLY-").Update(disabled=False)
             
-            event, values = self.window.Read(100)
+            event, values = self.window.Read(1)
 
             if event == sg.WIN_CLOSED or event == 'Exit':
                 with open(resource_path('cache.json'), 'w') as outfile:
@@ -194,7 +198,14 @@ class App:
                 self.folder_path_destination = values['-OUTPUT_FOLDER_PATH-']
                 self.cache["destination_folder"] = self.folder_path_destination
 
-            elif event == '-FILE_LIST-':    # A file was chosen from the listbox
+            elif event == 'Configure' and self.video_path:
+                width, height = (self.window.Size)
+                height = abs(height - 150) # pôur toujours voir les boutons de play/stop j'enleve 150px
+                self.vid_width = int(height * (self.vid.width/self.vid.height))
+                self.vid_height = int(height)
+                self.canvas.config(width=self.vid_width, height=self.vid_height)
+
+            elif event == '-FILE_LIST-': # A file was chosen from the listbox
                 self.video_path = None
                 try:
                     self.video_path =os.path.join(self.folder_path, values['-FILE_LIST-'][0])
@@ -203,9 +214,8 @@ class App:
                 if self.video_path:
 
                     width, height = (self.window.Size)
-                    height = abs(height - 100) # pôur toujours voir les boutons de play/stop j'enleve 150px
+                    height = abs(height - 150) # pour toujours voir les boutons de play/stop j'enleve 150px
 
-                    
                     self.window.Element('PLAY_BUTTON').SetFocus()
                     # Initialize video
                     self.vid = VideoPlayer(self.video_path)
@@ -221,10 +231,9 @@ class App:
                     self.canvas.config(width=self.vid_width, height=self.vid_height)
                     # Reset frame count
                     self.frame = 0
-                    self.delay = 1 / self.vid.fps
+                    self.delay = 1/ self.vid.fps
                     # Update the video path text field j'ai suppr pour pouvoir actauliser le folder
-                    # self.window.Element("-FOLDER_PATH-").Update(self.video_path)
-
+                    #self.window.Element("-FOLDER_PATH-").Update(self.video_path)
 
             elif (event == 'PLAY_BUTTON' or 'Spacebar' in event) and self.video_path:
                 self.window.Element('PLAY_BUTTON').SetFocus()
@@ -325,7 +334,7 @@ class App:
                         else:
                             self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=True)
                 else:
-                    x = Process(target=save_video, args=(self.name_blur,self.folder_path_destination,self.video_path,self.rotate_degree,self.extension,shared_mem[6])) #creation du thread executant la fonction run de notre objet
+                    x = Process(target=save_video, args=(self.name_blur,self.folder_path_destination,self.video_path,self.rotate_degree,self.extension,shared_mem[6],shared_mem)) #creation du thread executant la fonction run de notre objet
                     x.start() #excution du thread
 
             elif event == "slider":

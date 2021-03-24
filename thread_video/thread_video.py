@@ -21,7 +21,8 @@ def rotate_frame(frame, rotate):
         frame = cv2.rotate(frame, cv2.ROTATE_180)
     return frame
 
-def save_video(name,opath,ipath,rotate,extension,fps):
+def save_video(name,opath,ipath,rotate,extension,fps,shared_mem):
+    shared_mem[0]=True
     root, ext = os.path.splitext(ipath) 
     osef, namepath = os.path.split(ipath)
     namepath,ext = os.path.splitext(namepath)
@@ -51,6 +52,7 @@ def save_video(name,opath,ipath,rotate,extension,fps):
             reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath,fps=fps) # sinon cest ok
 
     meta = reader.get_meta_data()
+    nframes = reader.count_frames()
 
     if fps is None : #si les fps ne sont pas précisés 
         writer: imageio.plugins.ffmpeg.FfmpegFormat.Writer = imageio.get_writer(
@@ -66,13 +68,17 @@ def save_video(name,opath,ipath,rotate,extension,fps):
                 opath, format='FFMPEG', mode='I', fps=fps, **ffmpeg_config
             )#sinon on crée un fichier avec les fps par voulu
 
-    print("DEBUT SAVE")
     for frame in reader:
         frame = rotate_frame(frame,rotate) #on rotate s'il le faut
         writer.append_data(frame) # on met les images dans la video
-        print(end='-')
-    print("FIN SAVE")
+        shared_mem[2] += (1/nframes)*100
     writer.close()
+
+    shared_mem[0]= False
+    shared_mem[1]=True
+    shared_mem[2]=0.0
+    shared_mem[4]=1
+    shared_mem[3]=1
 
     return True
 
