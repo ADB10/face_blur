@@ -66,9 +66,12 @@ def save_video(name,opath,ipath,rotate,extension,fps):
                 opath, format='FFMPEG', mode='I', fps=fps, **ffmpeg_config
             )#sinon on crée un fichier avec les fps par voulu
 
+    print("DEBUT SAVE")
     for frame in reader:
         frame = rotate_frame(frame,rotate) #on rotate s'il le faut
         writer.append_data(frame) # on met les images dans la video
+        print(end='-')
+    print("FIN SAVE")
     writer.close()
 
     return True

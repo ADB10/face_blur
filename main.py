@@ -15,7 +15,7 @@ from datetime import datetime
 from multiprocessing import Value
 import json
 from time import sleep
-
+import multiprocessing
 from deface.centerface import CenterFace
 from deface.deface import *
 
@@ -31,7 +31,7 @@ def resource_path(relative_path):
 logging.basicConfig(filename=resource_path('logs.log'), level=logging.DEBUG) #Create our logging file
 
 shared_mem = shared_memory.ShareableList([False,False,0.0,1,1,0,None])
-# 0 - deface_executing = False # floutage en cours ?
+# 0 - deface_executing = False # video en cours de modification ?
 # 1 - deface_finish = False # le floutage vient de se terminer ?
 # 2 - progress = 0.0 # progress bar en %
 # 3 - files_to_blur = 1 # nb de fichiers à flouter
@@ -201,12 +201,17 @@ class App:
                 except AttributeError:
                     print("no video selected, doing nothing")
                 if self.video_path:
+
+                    width, height = (self.window.Size)
+                    height = abs(height - 100) # pôur toujours voir les boutons de play/stop j'enleve 150px
+
+                    
                     self.window.Element('PLAY_BUTTON').SetFocus()
                     # Initialize video
-                    self.vid = MyVideoCapture(self.video_path)
+                    self.vid = VideoPlayer(self.video_path)
                     # Calculate new video dimensions
-                    self.vid_width = 960
-                    self.vid_height = int(self.vid_width * self.vid.height / self.vid.width)
+                    self.vid_width = int(height * (self.vid.width/self.vid.height))
+                    self.vid_height = int(height)
                     self.frames = int(self.vid.frames)
                     # Update slider to match amount of frames
                     self.window.Element("slider").Update(range=(0, int(self.frames)), value=0)
@@ -412,7 +417,7 @@ class App:
         self.window.Element("counter").Update("{}/{}".format(frame, self.frames))
 
 
-class MyVideoCapture:
+class VideoPlayer:
     """
     Defines a new video loader with openCV
     Original code from https://solarianprogrammer.com/2018/04/21/python-opencv-show-video-tkinter-window/
