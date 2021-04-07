@@ -2,10 +2,10 @@
 
 
 ## do list
-- [ ] TODO Choisir le nombre de fps
-- [ ] TODO changer la barre de scroll (changer le pas) sous la video pour afficher chaque image
-- [ ] TODO possibilite de rotate la video
-- [ ] TODO deface : possibilite d'annuler le flouttage
+- [x] TODO Choisir le nombre de fps
+- [x] TODO changer la barre de scroll (changer le pas) sous la video pour afficher chaque image
+- [x] TODO possibilite de rotate la video
+- [x] TODO deface : possibilite d'annuler le flouttage
 - [x] Choisir format (27/02)
 - [x] récupérer données de deface pour la barre de progression dans l'interface
 - [x] faire un système de log
