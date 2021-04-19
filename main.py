@@ -119,7 +119,7 @@ class App:
             ],
             [
                 sg.Text('Sensibilité', size=(10, 1), background_color=DARK_BG, text_color=WHITE_TEXT),
-                sg.Slider(range=(1, 9), orientation='h', size=(35, 20), default_value=20, key="-THRESHOLD-",enable_events=True, background_color=DARK_BG),
+                sg.Slider(range=(1, 9), orientation='h', size=(35, 20), default_value=2, key="-THRESHOLD-",enable_events=True, background_color=DARK_BG),
             ],
             [
                 sg.Text('Appliquer les paramètres pour :', size=(25, 1), background_color=DARK_BG),
