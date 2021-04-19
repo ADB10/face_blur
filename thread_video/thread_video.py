@@ -6,6 +6,7 @@ from deface.deface import *
 import logging
 from datetime import datetime
 import os 
+from multiprocessing import Pool
 
 def cam_read_iter(reader):
     while True:
@@ -107,7 +108,7 @@ class ThreadVideo :
         nbthreads = len(self.files_path)
         threads = list()
         procs = list()
-        nb_core = cpu_count()
+        pool = multiprocessing.Pool()
         for index in range(nbthreads) :
             logging.info('Thread : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + 'Creation d"un thread')
             self.files_path[index] = self.folder_path + '/' + self.files_path[index]

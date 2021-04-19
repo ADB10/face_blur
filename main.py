@@ -119,25 +119,27 @@ class App:
             ],
             [
                 sg.Text('Sensibilité', size=(10, 1), background_color=DARK_BG, text_color=WHITE_TEXT),
-                sg.Slider(range=(0, 100), orientation='h', size=(35, 20), default_value=20, key="-THRESHOLD-", background_color=DARK_BG),
+                sg.Slider(range=(1, 9), orientation='h', size=(35, 20), default_value=20, key="-THRESHOLD-",enable_events=True, background_color=DARK_BG),
             ],
             [
-                sg.Text('Appliquer les paramètres pour :', size=(15, 1), background_color=DARK_BG),
+                sg.Text('Appliquer les paramètres pour :', size=(25, 1), background_color=DARK_BG),
                 sg.Radio('Vidéo', "4", default=True, enable_events=True, key='-VIDEO-',background_color=DARK_BG), 
                 sg.Radio('Dossier', "4", enable_events=True, key='-FOLDER-',background_color=DARK_BG)
             ],
             [
                 sg.Text('Nom du fichier', size=(15, 1), enable_events=True, background_color=DARK_BG, text_color=WHITE_TEXT,visible=True, key='-NAME_TEXT-'), 
-                sg.InputText(size=(43,1), enable_events=True, visible=True, key='-NAME_INPUT-')
+                sg.InputText(size=(35,1), enable_events=True, visible=True, key='-NAME_INPUT-')
             ],
             [ 
                 sg.Button('Appliquer', enable_events=True, button_color=(WHITE_TEXT, LIGHT_DARK_BG), border_width=-1, key='-APPLY-'),
+                sg.ProgressBar(100, orientation='h', size=(20, 20), visible=False, key='-PROGRESS_BAR-'),
+
             ],
             [
                 sg.Text('Il faut choisir une vidéo à flouter.', text_color="#AA0000", size=(60,1), background_color=DARK_BG, visible=False, key='-WARNING_VIDEO_PATH-'),
                 sg.Text('Il faut choisir un dossier de destination.', text_color="#AA0000", size=(60,1), background_color=DARK_BG, visible=False, key='-WARNING_OUTPUT_FOLDER-'),
                 # sg.ProgressBar(100, orientation='h', size=(20, 20), visible=False, key='-PROGRESS_BAR-'),
-                sg.ProgressBar(100, orientation='h', size=(20, 20), visible=False, key='-PROGRESS_BAR-'),
+                # sg.ProgressBar(100, orientation='h', size=(20, 20), visible=False, key='-PROGRESS_BAR-'),
                 sg.Text(text='En cours de floutage... | 0%', text_color="#AA0000", size=(60,1), background_color=DARK_BG, visible=True, key='-LOADING_BLUR_VIDEO-')
                     
             ]
@@ -156,7 +158,7 @@ class App:
         ]
 
         # ----- Full layout -----
-        layout = [[sg.Column(left_col, background_color=DARK_BG, size=(450,500), scrollable=True), sg.Column(videos_col, element_justification='c', background_color=DARK_BG)]]
+        layout = [[sg.Column(left_col, background_color=DARK_BG, size=(450,600), scrollable=True), sg.Column(videos_col, element_justification='c', background_color=DARK_BG)]]
 
 
         # --------------------------------- Create Window ---------------------------------
@@ -173,7 +175,6 @@ class App:
 
         # --------------------------------- Event Loop ---------------------------------
         while True:
-
             if shared_mem[0]:
                 if (self.blur == False) :
                     text_progress = "En cours de conversion... " + str(shared_mem[4]) + "/"+ str(shared_mem[3]) + " | " + str(round(shared_mem[2], 2)) + "%"
@@ -192,6 +193,21 @@ class App:
                 self.window.Element("-LOADING_BLUR_VIDEO-").Update(visible=False)
                 self.window.Element("-PROGRESS_BAR-").Update(visible=False, current_count=0)
                 self.window.Element("-APPLY-").Update(disabled=False)
+                self.window.Element("-THRESHOLD-").Update(disabled=False) #update le slider
+                self.window.Element("-30FPS-").Update(disabled=False) 
+                self.window.Element("-60FPS-").Update(disabled=False) 
+                self.window.Element("-AVI-").Update(disabled=False)
+                self.window.Element("-MP4-").Update(disabled=False) 
+                self.window.Element("-MKV-").Update(disabled=False) 
+                self.window.Element("-MOV-").Update(disabled=False) 
+                self.window.Element("-ROT0-").Update(disabled=False) 
+                self.window.Element("-ROT-90-").Update(disabled=False) 
+                self.window.Element("-ROT90-").Update(disabled=False) 
+                self.window.Element("-ROT180-").Update(disabled=False) 
+                self.window.Element("-Default-").Update(disabled=False) 
+                self.window.Element("-VIDEO-").Update(disabled=False) 
+                self.window.Element("-FOLDER-").Update(disabled=False) 
+
             
             event, values = self.window.Read(1)
 
@@ -212,7 +228,8 @@ class App:
                 self.cache["destination_folder"] = self.folder_path_destination
 
             elif event == '-THRESHOLD-':
-                shared_mem[7] = int(values['-THRESHOLD-'])/100
+                value = int(abs(values['-THRESHOLD-']-10))/10
+                shared_mem[7] = round(value,1) 
 
             elif event == 'Configure' and self.video_path:
                 width, height = (self.window.Size)
@@ -323,9 +340,25 @@ class App:
                                 curr_thread = ThreadVideo(self.video_path,self.folder_path,self.folder_path_destination,self.name_blur,self.extension, shared_mem) #création de l'objet
                                 x = Process(target=curr_thread.run_simple, args=()) #creation du thread executant la fonction run de notre objet
                                 x.start() #excution du processus
+                                shared_mem[0] = True
                                 self.window.Element("-APPLY-").Update(disabled=True) #update les boutons
+                                self.window.Element("-THRESHOLD-").Update(disabled=True) #update le slider
+                                self.window.Element("-30FPS-").Update(disabled=True) 
+                                self.window.Element("-60FPS-").Update(disabled=True) 
+                                self.window.Element("-AVI-").Update(disabled=True)
+                                self.window.Element("-MP4-").Update(disabled=True) 
+                                self.window.Element("-MKV-").Update(disabled=True) 
+                                self.window.Element("-MOV-").Update(disabled=True) 
+                                self.window.Element("-ROT0-").Update(disabled=True) 
+                                self.window.Element("-ROT-90-").Update(disabled=True) 
+                                self.window.Element("-ROT90-").Update(disabled=True) 
+                                self.window.Element("-ROT180-").Update(disabled=True) 
+                                self.window.Element("-Default-").Update(disabled=True) 
+                                self.window.Element("-VIDEO-").Update(disabled=True) 
+                                self.window.Element("-FOLDER-").Update(disabled=True) 
                                 self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=False)
                                 self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=False)
+
                             else:
                                 self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=True)
                                 self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=False)
@@ -333,7 +366,6 @@ class App:
                             self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=True)
 
                     if self.param == "Folder":
-                        print("DOSSIER")
                         if self.files_path != None:
                             if self.folder_path_destination != None:
                                 logging.info('Main : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : Creation de l\'objet thread pour le floutage de plusieurs video, dans le main')
@@ -341,7 +373,23 @@ class App:
                                 x = Process(target=curr_thread.run_multiple, args=()) #creation du thread executant la fonction run de notre objet
                                 shared_mem[3] = len(self.files_path)
                                 x.start() #excution du thread
+                                shared_mem[0] = True
                                 self.window.Element("-APPLY-").Update(disabled=True) #update les boutons
+                                self.window.Element("-THRESHOLD-").Update(disabled=True) #update le slider
+                                self.window.Element("-30FPS-").Update(disabled=True) 
+                                self.window.Element("-60FPS-").Update(disabled=True) 
+                                self.window.Element("-AVI-").Update(disabled=True)
+                                self.window.Element("-MP4-").Update(disabled=True) 
+                                self.window.Element("-MKV-").Update(disabled=True) 
+                                self.window.Element("-MOV-").Update(disabled=True) 
+                                self.window.Element("-ROT0-").Update(disabled=True) 
+                                self.window.Element("-ROT-90-").Update(disabled=True) 
+                                self.window.Element("-ROT90-").Update(disabled=True) 
+                                self.window.Element("-ROT180-").Update(disabled=True) 
+                                self.window.Element("-Default-").Update(disabled=True) 
+                                self.window.Element("-VIDEO-").Update(disabled=True) 
+                                self.window.Element("-FOLDER-").Update(disabled=True) 
+
                                 self.window.Element("-WARNING_OUTPUT_FOLDER-").Update(visible=False)
                                 self.window.Element("-WARNING_VIDEO_PATH-").Update(visible=False)
                             else:
@@ -416,11 +464,6 @@ class App:
                     self.frame += 1
                     self.update_counter(self.frame)
 
-            #Uncomment these to be able to manually count fps
-            #print(str(self.next) + " It's " + str(time.ctime()))
-            #self.next = int(self.next) + 1
-        # The tkinter .after method lets us recurse after a delay without reaching recursion limit. We need to wait
-        # between each frame to achieve proper fps, but also count the time it took to generate the previous frame.
         self.canvas.after(abs(int((self.delay - (time.time() - start_time)) * 1000)), self.update)
 
     def set_frame(self, frame_no):

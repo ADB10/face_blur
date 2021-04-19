@@ -227,61 +227,6 @@ def get_file_type(path):
     return mime
 
 
-def parse_cli_args():
-    parser = argparse.ArgumentParser(description='Video anonymization by face detection', add_help=False)
-    parser.add_argument(
-        'input', nargs='*',
-        help=f'File path(s) or camera device name. It is possible to pass multiple paths by separating them by spaces or by using shell expansion (e.g. `$ deface vids/*.mp4`). If a camera is installed, a live webcam demo can be started by running `$ deface cam` (which is a shortcut for `$ deface -p \'<video0>\'`.')
-    parser.add_argument(
-        '--output', '-o', default=None, metavar='O',
-        help='Output file name. Defaults to input path + postfix "_anonymized".')
-    parser.add_argument(
-        '--thresh', '-t', default=0.2, type=float, metavar='T',
-        help='Detection threshold (tune this to trade off between false positive and false negative rate). Default: 0.2.')
-    parser.add_argument(
-        '--scale', '-s', default=None, metavar='WxH',
-        help='Downscale images for network inference to this size (format: WxH, example: --scale 640x360).')
-    parser.add_argument(
-        '--preview', '-p', default=False, action='store_true',
-        help='Enable live preview GUI (can decrease performance).')
-    parser.add_argument(
-        '--boxes', default=False, action='store_true',
-        help='Use boxes instead of ellipse masks.')
-    parser.add_argument(
-        '--draw-scores', default=False, action='store_true',
-        help='Draw detection scores onto outputs.')
-    parser.add_argument(
-        '--mask-scale', default=1.3, type=float, metavar='M',
-        help='Scale factor for face masks, to make sure that masks cover the complete face. Default: 1.3.')
-    parser.add_argument(
-        '--replacewith', default='blur', choices=['blur', 'solid', 'none'],
-        help='Anonymization filter mode for face regions. "blur" applies a strong gaussian blurring, "solid" draws a solid black box and "none" does leaves the input unchanged. Default: "blur".')
-    parser.add_argument(
-        '--ffmpeg-config', default={"codec": "libx264"}, type=json.loads,
-        help='FFMPEG config arguments for encoding output videos. This argument is expected in JSON notation. For a list of possible options, refer to the ffmpeg-imageio docs. Default: \'{"codec": "libx264"}\'.'
-    )  # See https://imageio.readthedocs.io/en/stable/format_ffmpeg.html#parameters-for-saving
-    parser.add_argument(
-        '--backend', default='auto', choices=['auto', 'onnxrt', 'opencv'],
-        help='Backend for ONNX model execution. Default: "auto" (prefer onnxrt if available).')
-    # parser.add_argument(
-    #     '--version', action='version', version=__version__,
-    #     help='Print version number and exit.')
-    parser.add_argument('--help', '-h', action='help', help='Show this help message and exit.')
-
-    args = parser.parse_args()
-
-    if len(args.input) == 0:
-        parser.print_help()
-        print('\nPlease supply at least one input path.')
-        exit(1)
-
-    if args.input == ['cam']:  # Shortcut for webcam demo with live preview
-        args.input = ['<video0>']
-        args.preview = True
-
-    return args
-
-
 def main_deface(input_files, output_folder, name, extension, shared_mem):
 
     ipaths = input_files
