@@ -1,5 +1,23 @@
 # face_blur
 
+## Créer un executable sur Windows 10
+
+Installer python3.6, pip, auto-py-to-exe
+Télécharger le code source et installer les dépendances
+Lancer la commande "auto-py-to-exe" depuis un terminal
+
+Script location = sélectionner main.py à la racine
+Selectionner One Directory
+Window Based pour cacher la console
+Ajouter des dossiers et des fichiers dans la partie "Additional Files"
+Add Folder:
+  - thread_video
+  - interface
+  - deface
+Add files:
+  - cache.json
+  - logs.log
+
 
 ## do list
 - [x] Choisir le nombre de fps
