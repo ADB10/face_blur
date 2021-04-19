@@ -291,7 +291,7 @@ def main_deface(input_files, output_folder, name, extension, shared_mem):
     replacewith = 'blur'
     enable_preview = False
     draw_scores = False
-    threshold = 0.2
+    threshold = shared_mem[7]
     ellipse = True
     mask_scale = 1.3
     ffmpeg_config = {'codec': 'libx264'}

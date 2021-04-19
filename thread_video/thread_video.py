@@ -1,8 +1,7 @@
 import threading
 from deface.centerface import CenterFace
 from multiprocessing import Value, Process, Pipe
-from multiprocessing import shared_memory
-
+from multiprocessing import shared_memory, cpu_count
 from deface.deface import *
 import logging
 from datetime import datetime
@@ -108,6 +107,7 @@ class ThreadVideo :
         nbthreads = len(self.files_path)
         threads = list()
         procs = list()
+        nb_core = cpu_count()
         for index in range(nbthreads) :
             logging.info('Thread : ' + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + 'Creation d"un thread')
             self.files_path[index] = self.folder_path + '/' + self.files_path[index]

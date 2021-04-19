@@ -30,7 +30,7 @@ def resource_path(relative_path):
 
 logging.basicConfig(filename=resource_path('logs.log'), level=logging.DEBUG) #Create our logging file
 
-shared_mem = shared_memory.ShareableList([False,False,0.0,1,1,0,None])
+shared_mem = shared_memory.ShareableList([False,False,0.0,1,1,0,None,0.2])
 # 0 - deface_executing = False # video en cours de modification ?
 # 1 - deface_finish = False # le floutage vient de se terminer ?
 # 2 - progress = 0.0 # progress bar en %
@@ -38,6 +38,7 @@ shared_mem = shared_memory.ShareableList([False,False,0.0,1,1,0,None])
 # 4 - file_being_blur = 1 # numéro du fichier en train de se faire flouter
 # 5 - rotate = 0
 # 6 - frame_rate = None
+# 7 - threshold = 0.2
 
 class App:
 
@@ -89,10 +90,10 @@ class App:
         left_col = [
             [
                 sg.FolderBrowse(button_text="Choisir le dossier des vidéos", target='-FOLDER_PATH-', initial_folder=self.cache["current_folder"], button_color=(WHITE_TEXT, LIGHT_DARK_BG)), 
-                sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_rotate, image_size=(50, 50), image_subsample=2, border_width=0, key='-UPDATE_FILES-')
+                sg.Button(button_color=(WHITE_TEXT,DARK_BG), image_filename=image_rotate, image_size=(40, 40), image_subsample=2, border_width=0, key='-UPDATE_FILES-')
             ],
             [sg.In(size=(60,1), default_text=self.cache["current_folder"], enable_events=True, background_color=LIGHT_DARK_BG, text_color=WHITE_TEXT, border_width=0, key='-FOLDER_PATH-')],
-            [sg.Listbox(values=[], enable_events=True, size=(58,20), key='-FILE_LIST-')],
+            [sg.Listbox(values=[], enable_events=True, size=(58,5), key='-FILE_LIST-')],
             [sg.FolderBrowse(button_text="Choisir le dossier de destination", target='-OUTPUT_FOLDER_PATH-', initial_folder=self.cache["destination_folder"], button_color=(WHITE_TEXT, LIGHT_DARK_BG))],
             [sg.In(size=(60,1), default_text=self.cache["destination_folder"], enable_events=True, background_color=LIGHT_DARK_BG, text_color=WHITE_TEXT, border_width=0, key='-OUTPUT_FOLDER_PATH-')],
             [sg.Checkbox('Flouter', size=(10,1), enable_events=True, default=True, background_color=DARK_BG, text_color=WHITE_TEXT, key='-BLUR-')],
@@ -117,7 +118,11 @@ class App:
                 sg.Radio('60', "3", enable_events=True, key='-60FPS-',background_color=DARK_BG),
             ],
             [
-                sg.Text('Appliquer les paramètres pour :', size=(15, 2), background_color=DARK_BG),
+                sg.Text('Sensibilité', size=(10, 1), background_color=DARK_BG, text_color=WHITE_TEXT),
+                sg.Slider(range=(0, 100), orientation='h', size=(35, 20), default_value=20, key="-THRESHOLD-", background_color=DARK_BG),
+            ],
+            [
+                sg.Text('Appliquer les paramètres pour :', size=(15, 1), background_color=DARK_BG),
                 sg.Radio('Vidéo', "4", default=True, enable_events=True, key='-VIDEO-',background_color=DARK_BG), 
                 sg.Radio('Dossier', "4", enable_events=True, key='-FOLDER-',background_color=DARK_BG)
             ],
@@ -125,12 +130,16 @@ class App:
                 sg.Text('Nom du fichier', size=(15, 1), enable_events=True, background_color=DARK_BG, text_color=WHITE_TEXT,visible=True, key='-NAME_TEXT-'), 
                 sg.InputText(size=(43,1), enable_events=True, visible=True, key='-NAME_INPUT-')
             ],
-            [ sg.Button('Appliquer', enable_events=True, button_color=(WHITE_TEXT, LIGHT_DARK_BG), border_width=-1, key='-APPLY-')],
+            [ 
+                sg.Button('Appliquer', enable_events=True, button_color=(WHITE_TEXT, LIGHT_DARK_BG), border_width=-1, key='-APPLY-'),
+            ],
             [
                 sg.Text('Il faut choisir une vidéo à flouter.', text_color="#AA0000", size=(60,1), background_color=DARK_BG, visible=False, key='-WARNING_VIDEO_PATH-'),
                 sg.Text('Il faut choisir un dossier de destination.', text_color="#AA0000", size=(60,1), background_color=DARK_BG, visible=False, key='-WARNING_OUTPUT_FOLDER-'),
+                # sg.ProgressBar(100, orientation='h', size=(20, 20), visible=False, key='-PROGRESS_BAR-'),
                 sg.ProgressBar(100, orientation='h', size=(20, 20), visible=False, key='-PROGRESS_BAR-'),
                 sg.Text(text='En cours de floutage... | 0%', text_color="#AA0000", size=(60,1), background_color=DARK_BG, visible=True, key='-LOADING_BLUR_VIDEO-')
+                    
             ]
         ]
 
@@ -147,7 +156,7 @@ class App:
         ]
 
         # ----- Full layout -----
-        layout = [[sg.Column(left_col, background_color=DARK_BG), sg.Column(videos_col, element_justification='c', background_color=DARK_BG)]]
+        layout = [[sg.Column(left_col, background_color=DARK_BG, size=(450,500), scrollable=True), sg.Column(videos_col, element_justification='c', background_color=DARK_BG)]]
 
 
         # --------------------------------- Create Window ---------------------------------
@@ -193,10 +202,17 @@ class App:
 
             elif event == '-FOLDER_PATH-' or event == '-UPDATE_FILES-': # Folder name was filled in, make a list of files in the folder
                 self.define_files_list(values)
+                if self.folder_path_destination == "":
+                    self.folder_path_destination = self.folder_path
+                    self.window.Element("-OUTPUT_FOLDER_PATH-").Update(self.folder_path)
+                    
 
             elif event == '-OUTPUT_FOLDER_PATH-':
                 self.folder_path_destination = values['-OUTPUT_FOLDER_PATH-']
                 self.cache["destination_folder"] = self.folder_path_destination
+
+            elif event == '-THRESHOLD-':
+                shared_mem[7] = int(values['-THRESHOLD-'])/100
 
             elif event == 'Configure' and self.video_path:
                 width, height = (self.window.Size)
