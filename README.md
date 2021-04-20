@@ -10,7 +10,7 @@ Choisir le dossier des vidéos
 Liste des fichiers dans le dossier des vidéos
   -> permet de sélectionner la vidéo sur laquelle appliquer le floutage, il est possible de voir la vidéo selectionner dans la partie droite en cliquant sur le bouton "▶"
   
-Choisir le dossier de destination
+Choisir le dossier de destination  
   -> permet de sélectionner le dossier de destination des vidéos traitées
 
 Flouter
